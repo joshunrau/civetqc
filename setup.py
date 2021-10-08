@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='qcivet',
+    name='civetqc',
     version='0.1.0',
     author='Joshua Unrau',
     author_email='joshua.unrau@mail.mcgill.ca',
