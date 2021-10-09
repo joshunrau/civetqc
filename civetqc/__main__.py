@@ -1,6 +1,9 @@
-import sys
+from argparse import ArgumentParser
 from civetqc import Subject
 
 if __name__ == "__main__":
-    test_subj = Subject(sys.argv[1], sys.argv[2])
-    print(test_subj)
+    parser = ArgumentParser()
+    parser.add_argument("--prefix", type=str, nargs=1, required=True, help="file prefix")
+    parser.add_argument("--id", type=str, nargs=1, required=True, help="subject id")
+    args = parser.parse_args()
+    print(args)
