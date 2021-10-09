@@ -2,7 +2,7 @@ class Subject:
 
     def __init__(self, prefix, subj_id) -> None:
         self.prefix = str(prefix)
-        self.id = str(subj_id)
+        self.subj_id = str(subj_id)
         self.angles_png = f"{prefix}_{subj_id}_angles.png" # quality control image for mesh distortion angle between white and gray surfaces
         self.atlas_png = f"{prefix}_{subj_id}_atlas.png" # quality control image for surface registration and lobar segmentation
         self.clasp_png = f"{prefix}_{subj_id}_clasp.png" # quality control image for surface extraction

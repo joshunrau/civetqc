@@ -1,5 +1,5 @@
 import sys
-from civetqc.subject import Subject
+from civetqc import Subject
 
 if __name__ == "__main__":
     test_subj = Subject(sys.argv[1], sys.argv[2])
