@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class Subject:
 
     def __init__(self, prefix, subj_id) -> None:
@@ -17,3 +20,26 @@ class Subject:
     
     def __str__(self) -> str:
         return f"{self.prefix} {self.subj_id}"
+    
+    @classmethod
+    def import_csv(cls, path_csv) -> None:
+        """ get data from csv file containing known QC ratings """
+
+        cls.df = pd.read_csv(path_csv)
+        for col in ["Full_ID", "QC_Rating"]:
+            if col not in cls.df.columns:
+                raise KeyError(f"Required field '{col}' not found in file {path_csv}")
+        
+        # All non-numeric values will be coerced to NA
+        cls.df["QC_Rating"] = pd.to_numeric(cls.df['QC_Rating'], errors='coerce')
+
+        # All values must therefore be NA or 0, 1, or 2
+        for i in cls.df['QC_Rating']:
+            if i not in range(3) and not pd.isna(i):
+                raise ValueError("All non-missing values in 'QC_Rating' must be between 0 and 2")
+
+    @staticmethod
+    def print_df(df) -> None:
+        """ used to print entire data frame for testing in jupyter notebook """
+        with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+            print(df)
