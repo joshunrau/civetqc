@@ -1,5 +1,5 @@
 import pandas as pd
-
+from .exceptions import InvalidRatingError, VariableNotFoundError
 
 class CivetData:
 
@@ -12,7 +12,7 @@ class CivetData:
         # All values must therefore be NA or 0, 1, or 2
         for i in self.usrqc['QC_Rating']:
             if i not in range(3) and not pd.isna(i):
-                raise ValueError("All non-missing values in 'QC_Rating' must be between 0 and 2")
+                raise InvalidRatingError(f"Invalid non-missing value {i} in 'QC_Rating'. Values must be 0, 1, or 2.")
         
         # Import civet output
         self.civout = self.read_csv(path_civout)
@@ -38,7 +38,7 @@ class CivetData:
         df = pd.read_csv(path_csv)
         for col in required_cols:
             if col not in df.columns:
-                raise KeyError(f"Required field '{col}' not found in file {path_csv}")
+                raise VariableNotFoundError(f"Required field '{col}' not found in file {path_csv}")
         return df
 
     @staticmethod
