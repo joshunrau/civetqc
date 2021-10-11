@@ -17,6 +17,10 @@ class CivetData:
         # Import civet output
         self.civout = self.read_csv(path_civout)
 
+        # Combine dataframes
+        
+        # Write csv file for documentation
+
     def __str__(self) -> str:
         return "\n".join((
             f"User QC: N={len(self.usrqc['Full_ID'])}",
