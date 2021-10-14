@@ -1,6 +1,5 @@
 .DEFAULT_GOAL:= clean-install
-.PHONY: clean install clean-install
-.ONESHELL:
+.PHONY: help clean install clean-install
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
@@ -17,9 +16,8 @@ clean:
 install:
 	@type virtualenv >/dev/null 2>&1 || pip install virtualenv
 	virtualenv --no-download venv
-	(source venv/bin/activate)
-	pip install --upgrade pip setuptools wheel
-	pip install -r requirements.txt
-	pip install .
+	. ./venv/bin/activate; pip install --upgrade pip setuptools wheel
+	. ./venv/bin/activate; pip install -r requirements.txt
+	. ./venv/bin/activate; pip install .
 
 clean-install: clean install
