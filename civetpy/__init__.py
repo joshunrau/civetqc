@@ -1,1 +1,1 @@
-from .civetdata import CivetData
+from .civetqc import CivetData
