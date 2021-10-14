@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+
+from argparse import ArgumentParser
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser(prog="civetpy")
+    parser.add_argument("--msg", type=str, nargs=1, required=False, help="test message to echo")
+    args = parser.parse_args()
+
+    print(args.msg[0])
