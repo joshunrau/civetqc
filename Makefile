@@ -1,9 +1,10 @@
 .DEFAULT_GOAL:= clean-install
 .PHONY: clean install clean-install
+.ONESHELL:
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
-	@echo "install - create new virtual environment with package installed"
+	@echo "install - create new virtual environment with package and dependencies installed"
 	@echo "clean-install - run both clean and install (default)"
 
 clean:
