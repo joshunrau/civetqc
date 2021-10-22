@@ -1,19 +1,19 @@
 import pandas as pd
 
 
-def import_data(filename: str, contains: str) -> pd.DataFrame:
-    """ import csv file including all column names containing a string """
-    colnames = list(pd.read_csv(filename, dtype=str, nrows=0))
-    include_vars = ["eid"] + [x for x in colnames if contains in x]
-    return pd.read_csv(filename, dtype=str, usecols=include_vars)
-
-
 def elements_in_str(s: str, l: list) -> bool:
     """ returns whether any element in 'l' is a substring of 's' """
     for element in l:
         if element in s:
             return True
     return False
+
+
+def import_data(filename: str, contains: list) -> pd.DataFrame:
+    """ import csv file including all column names containing a string in 'contains'  """
+    colnames = list(pd.read_csv(filename, dtype=str, nrows=0))
+    include_vars = ["eid"] + [x for x in colnames if elements_in_str(x, contains)]
+    return pd.read_csv(filename, dtype=str, usecols=include_vars)
 
 
 def get_matching_ids(df: pd.DataFrame, colnames: list, identifier: str, contains: list) -> list:
@@ -38,5 +38,6 @@ def write_txt(l: list, filename: str) -> None:
 
 
 if __name__ == "__main__":
-    df = import_data("current.csv", "41202")
+    df = import_data("current.csv", ["41202", "41270"])
     list_ids = get_matching_ids(df, df.columns, "eid", ["F2"])
+    write_txt(list_ids, "sz_patients_Oct22.txt")
