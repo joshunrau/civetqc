@@ -8,17 +8,24 @@ def import_data(filename: str, contains: str) -> pd.DataFrame:
     return pd.read_csv(filename, dtype=str, usecols=include_vars)
 
 
-def get_matching_ids(df: pd.DataFrame, colnames: list, identifier: str, contains: str) -> list:
-    """ returns a list of ids with one or more values in any of 'colnames' containing the string 'contains' """
+def elements_in_str(s: str, l: list) -> bool:
+    """ returns whether any element in 'l' is a substring of 's' """
+    for element in l:
+        if element in s:
+            return True
+    return False
+
+
+def get_matching_ids(df: pd.DataFrame, colnames: list, identifier: str, contains: list) -> list:
+    """ returns a list of ids with one or more values in any of 'colnames' containing any string in the list 'contains' """
     df = df.astype(str)
     list_ids = []
-    for i in colnames:
-        for j in range(len(df[i])):
-            value = df[i][j]
-            subj_id = df[identifier][j]
-            if contains in value and subj_id not in list_ids:
+    for col in colnames:
+        for row_index in range(len(df[col])):
+            value, subj_id = df[col][row_index], df[identifier][row_index]
+            if elements_in_str(value, contains) and subj_id not in list_ids:
                 list_ids.append(subj_id)
-        print(len(list_ids))
+        print(f"Number of IDs currently in list: {len(list_ids)}")
     return list_ids
 
 
@@ -32,5 +39,4 @@ def write_txt(l: list, filename: str) -> None:
 
 if __name__ == "__main__":
     df = import_data("current.csv", "41202")
-    list_ids = get_matching_ids(df, df.columns, "F2")
-    write_txt(list_ids, "sz_patients.txt")
+    list_ids = get_matching_ids(df, df.columns, "eid", ["F2"])
