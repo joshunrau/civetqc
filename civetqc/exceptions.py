@@ -1,4 +1,4 @@
-class InvalidRatingError(ValueError):
+class InvalidFileTypeError(Exception):
     pass
 
 class VariableNotFoundError(Exception):
