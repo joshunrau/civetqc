@@ -51,14 +51,14 @@ def prepare_dataset(path_civet_output: str, path_user_ratings: str, req_usr_vars
     user_ratings = read_csv(path_user_ratings, req_usr_vars)
 
     # Coerce all non-numeric values in user_ratings to NA
-    user_ratings[req_usr_vars["QCVAR"]] = pd.to_numeric(req_usr_vars["QCVAR"], errors='coerce')
+    user_ratings[req_usr_vars["QCVAR"]] = user_ratings[req_usr_vars["QCVAR"]].apply(pd.to_numeric, errors='coerce')
 
     # Make sure all ID variable values are unique
     if not check_unique(civet_output[req_usr_vars["IDVAR"]]):
         raise AssertionError("Non-unique values for ID variable in CIVET QC output")
     if not check_unique(user_ratings[req_usr_vars["IDVAR"]]):
         raise ValueError("Non-unique values for ID variable in QC ratings file")
-    
+
     # Combine dataframes
     df = pd.merge(civet_output, user_ratings, on=req_usr_vars["IDVAR"])
 

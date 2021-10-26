@@ -3,7 +3,6 @@
 # TO-DO 
 # finish merge with NA
 import argparse
-import os
 import sys
 from civetqc.prepare_dataset import prepare_dataset
 
