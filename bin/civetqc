@@ -2,34 +2,15 @@
 #
 # TO-DO 
 # finish merge with NA
-import argparse
+from civetqc.dataset import CivetOutput, UserRatings, MergedDataset
+from civetqc.parse_args import parse_args
 import sys
-from civetqc.prepare_dataset import prepare_dataset
-
-
-REQUIRED_USR_VARS = {
-    "IDVAR" : "ID",
-    "QCVAR" : "QC"
-}
-
-
-def parse_args(args) -> argparse.Namespace:
-    """ parse arguments given at command line """
-    parser = argparse.ArgumentParser(prog="civetqc")
-    parser.add_argument("civet_output", type=str, nargs=1, 
-                        help="The path to the quality control csv file outputed by CIVET")
-    parser.add_argument("user_ratings", type=str, nargs=1, 
-                        help="The path to the csv file containing user quality control ratings")
-    parser.add_argument("--output_dir", "-o", type=str, required=False, nargs=1, 
-                        help="The path to directory where files should be outputted")
-    return parser.parse_args(args)
 
 
 def main() -> None:
     args = parse_args(sys.argv[1:])
-    output_dir = args.output_dir[0]
-    df = prepare_dataset(args.civet_output[0], args.user_ratings[0], REQUIRED_USR_VARS, output_dir)
-
+    merged_dataset = MergedDataset(CivetOutput(args.civet_output[0]), UserRatings(args.user_ratings[0]))
+    print(merged_dataset.data)
 
 if __name__ == "__main__":
     main()
