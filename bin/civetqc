@@ -1,16 +1,23 @@
 #!/usr/bin/env python
-#
-# TO-DO 
-# finish merge with NA
-from civetqc.data_classes import CivetOutput, UserRatings, CivetData
-from civetqc.parse_args import parse_args
+
+import argparse
+from civetqc.core import CivetOutput, UserRatings, CivetData
 import sys
+
+
+def parse_args(args) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="civetqc")
+    parser.add_argument("civet_output", type=str, nargs=1, help="Path to CSV file outputted by CIVET for QC")
+    parser.add_argument("user_ratings", type=str, nargs=1, help="Path to CSV file containing user QC ratings")
+    parser.add_argument("output_dir", type=str, nargs=1, help="Path to directory where results will be outputted")
+    return parser.parse_args(args)
 
 
 def main() -> None:
     args = parse_args(sys.argv[1:])
     dataset = CivetData(CivetOutput(args.civet_output[0]), UserRatings(args.user_ratings[0]), drop_na=True)
     dataset.test_knn(range(1, 10))
+
 
 if __name__ == "__main__":
     main()

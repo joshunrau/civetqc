@@ -16,6 +16,9 @@ clean:
 requirements:
 	pipreqs . --force
 
+test:
+	python -m unittest discover .
+
 install:
 	@type virtualenv >/dev/null 2>&1 || pip install virtualenv
 	virtualenv --no-download venv
