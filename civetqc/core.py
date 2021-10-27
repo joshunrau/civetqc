@@ -113,5 +113,5 @@ class CivetData(CivetOutput, UserRatings):
             knn.fit(self.feat_train, self.targ_train)
             targ_pred = knn.predict(self.feat_test)
             print(targ_pred)
-            print(self.targ_test)
+            print(list(self.targ_test))
             print("Test set score: {:.2f}".format(np.mean(targ_pred == self.targ_test)))

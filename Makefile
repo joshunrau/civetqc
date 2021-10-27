@@ -19,6 +19,9 @@ requirements:
 test:
 	python -m unittest discover .
 
+shell_test:
+	./bin/shell_test
+
 install:
 	pip install -r requirements.txt
 	pip install .

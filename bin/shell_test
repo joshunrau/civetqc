@@ -1,0 +1,7 @@
+#!/bin/bash
+
+PATH_CIVET_OUTPUT="/Users/joshua/Developer/civetqc/data/LAM/QC/civet_LAM_.csv"
+PATH_USER_RATINGS="/Users/joshua/Developer/civetqc/data/LAM/user_ratings.csv"
+OUTPUT_DIR="/Users/joshua/Developer/civetqc/data/Tests"
+
+civetqc "$PATH_CIVET_OUTPUT" "$PATH_USER_RATINGS" "$OUTPUT_DIR"
