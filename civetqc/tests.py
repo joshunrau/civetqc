@@ -1,5 +1,5 @@
 import unittest
-from civetqc.core import CivetOutput, UserRatings, CivetData
+from .core import CivetOutput, UserRatings, CivetData
 
 
 PATH_CIVET_OUTPUT = "/Users/joshua/Developer/civetqc/data/LAM/QC/civet_LAM_.csv"
