@@ -1,5 +1,5 @@
 .DEFAULT_GOAL:= clean-install
-.PHONY: help clean install clean-install
+.PHONY: help clean requirements install clean-install
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
@@ -12,6 +12,9 @@ clean:
 	rm -fr venv/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '__pycache__' -exec rm -fr {} +
+
+requirements:
+	pipreqs . --force
 
 install:
 	@type virtualenv >/dev/null 2>&1 || pip install virtualenv

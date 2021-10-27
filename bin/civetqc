@@ -2,15 +2,15 @@
 #
 # TO-DO 
 # finish merge with NA
-from civetqc.dataset import CivetOutput, UserRatings, MergedDataset
+from civetqc.data_classes import CivetOutput, UserRatings, CivetData
 from civetqc.parse_args import parse_args
 import sys
 
 
 def main() -> None:
     args = parse_args(sys.argv[1:])
-    merged_dataset = MergedDataset(CivetOutput(args.civet_output[0]), UserRatings(args.user_ratings[0]))
-    print(merged_dataset.data)
+    dataset = CivetData(CivetOutput(args.civet_output[0]), UserRatings(args.user_ratings[0]), drop_na=True)
+    dataset.test_knn(range(1, 10))
 
 if __name__ == "__main__":
     main()

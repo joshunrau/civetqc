@@ -1,5 +1,6 @@
 import argparse
 
+
 def parse_args(args) -> argparse.Namespace:
     """ parse arguments given at command line """
     parser = argparse.ArgumentParser(prog="civetqc")

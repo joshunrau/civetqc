@@ -1,5 +1,9 @@
+import numpy as np
 import os
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+import typing
 
 
 class InvalidFileTypeError(Exception):
@@ -53,11 +57,15 @@ class Dataset:
     def col_to_numeric(self, var: str) -> None:
         self.data[var] = self.data[var].apply(pd.to_numeric, errors='coerce')
     
-    def print_data(self) -> None:
-        """ print all rows and columns in pandas dataframe """
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-            print(self.data)
-    
+    def print_data(self, var: typing.Optional[str]=None) -> None:
+        """ print all rows and columns in pandas dataframe, or all rows in column """
+        if var is None:
+            with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+                print(self.data)
+        else:
+            with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+                print(self.data[var])
+
     @staticmethod
     def is_unique(s: pd.Series) -> bool:
         """ return whether all values in series are unique """
@@ -69,7 +77,7 @@ class Dataset:
 
 
 class CivetOutput(Dataset):
-    features = [
+    civet_vars = [
         "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT", 
         "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL", 
         "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA", 
@@ -78,7 +86,7 @@ class CivetOutput(Dataset):
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
         ]
     def __init__(self, path_csv: str) -> None:
-        super().__init__(path_csv, [self.idvar] + self.features)
+        super().__init__(path_csv, [self.idvar] + self.civet_vars)
         
 
 class UserRatings(Dataset):
@@ -87,7 +95,22 @@ class UserRatings(Dataset):
         super().__init__(path_csv, [self.idvar, self.qcvar])
 
 
-class MergedDataset(CivetOutput, UserRatings):
-    def __init__(self, civet_output: CivetOutput, user_ratings: UserRatings) -> None:
+class CivetData(CivetOutput, UserRatings):
+    def __init__(self, civet_output: CivetOutput, user_ratings: UserRatings, drop_na: bool = False) -> None:
         self.data = pd.merge(civet_output.data, user_ratings.data, on=self.idvar)
-
+        if drop_na:
+            self.data = self.data.dropna() 
+        self.features = self.data[self.civet_vars]
+        self.target = self.data[self.qcvar]
+        self.feat_train, self.feat_test, self.targ_train, self.targ_test = train_test_split(
+            self.features, self.target, random_state=0)
+    
+    def test_knn(self, r: typing.Union[int, range]) -> None:
+        if type(r) == int:
+            r = range(r, r+1)
+        for i in r:
+            knn = KNeighborsClassifier(n_neighbors=i)
+            knn.fit(self.feat_train, self.targ_train)
+            targ_pred = knn.predict(self.feat_test)
+            print("Test set score: {:.2f}".format(np.mean(targ_pred == self.targ_test)))
+    
