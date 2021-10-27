@@ -20,10 +20,7 @@ test:
 	python -m unittest discover .
 
 install:
-	@type virtualenv >/dev/null 2>&1 || pip install virtualenv
-	virtualenv --no-download venv
-	. ./venv/bin/activate; pip install --upgrade pip setuptools wheel
-	. ./venv/bin/activate; pip install -r requirements.txt
-	. ./venv/bin/activate; pip install .
+	pip install -r requirements.txt
+	pip install .
 
 clean-install: clean install
