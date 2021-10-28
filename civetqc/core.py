@@ -15,6 +15,12 @@ class BaseData:
 
     idvar : str
         the name of the ID variable which must be in imported csv files
+    
+    qcvar : str
+        the name of the column containing user QC ratings
+
+    civet_vars : list
+        the features outputted by CIVET
 
     data : pd.DataFrame
         dataframe imported from path_csv
@@ -47,6 +53,16 @@ class BaseData:
     """
 
     idvar = "ID"
+    qcvar = "QC"
+    
+    civet_vars = [
+        "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT", 
+        "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL", 
+        "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA", 
+        "RIGHT_WM_AREA", "RIGHT_MID_AREA", "RIGHT_GM_AREA", "GI_LEFT", "GI_RIGHT", 
+        "LEFT_INTER", "RIGHT_INTER", "LEFT_SURF_SURF", "RIGHT_SURF_SURF", "LAPLACIAN_MIN",
+        "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
+        ]
 
     def __init__(self, path_csv: str, required_vars: list) -> None:
         """
@@ -115,50 +131,7 @@ class BaseData:
         return filepath.split(".")[-1] == "csv"
 
 
-class CivetData(BaseData):
-    """ 
-    Subclass of BaseData used to import CIVET QC output file
-    
-    ...
-
-    Attributes
-    ----------
-
-    civet_vars : list
-        the features outputted by CIVET
-
-    """
-    civet_vars = [
-        "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT", 
-        "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL", 
-        "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA", 
-        "RIGHT_WM_AREA", "RIGHT_MID_AREA", "RIGHT_GM_AREA", "GI_LEFT", "GI_RIGHT", 
-        "LEFT_INTER", "RIGHT_INTER", "LEFT_SURF_SURF", "RIGHT_SURF_SURF", "LAPLACIAN_MIN",
-        "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
-        ]
-    def __init__(self, path_csv: str) -> None:
-        super().__init__(path_csv, [self.idvar] + self.civet_vars)
-        
-
-class UserData(BaseData):
-    """ 
-    Subclass of BaseData used to import user QC ratings
-    
-    ...
-
-    Attributes
-    ----------
-
-    qcvar : str
-        the name of the column containing user QC ratings
-
-    """
-    qcvar = "QC"
-    def __init__(self, path_csv: str) -> None:
-        super().__init__(path_csv, [self.idvar, self.qcvar])
-
-
-class Dataset(CivetData, UserData):
+class Dataset(BaseData):
     """ 
     Class used to merge and organize data for analysis
     
@@ -176,16 +149,16 @@ class Dataset(CivetData, UserData):
     target: pd.Series
         subset of data containing the known QC ratings by the user
 
-    feat_train
+    feat_train: pd.DataFrame
         training set of features (75%)
     
-    feat_test
+    feat_test: pd.DataFrame
         testing set of features (25%)
     
-    targ_train
+    targ_train: pd.Series
         training set of target (75%)
 
-    targ_test
+    targ_test: pd. Series
         testing set of target (25%)
 
     """
@@ -199,8 +172,8 @@ class Dataset(CivetData, UserData):
         user_csv: str
             path to the csv file containing the user's QC ratings
         """
-        civet_output = CivetData(civet_csv)
-        user_ratings = UserData(user_csv)
+        civet_output = BaseData(civet_csv, [self.idvar] + self.civet_vars)
+        user_ratings = BaseData(user_csv, [self.idvar, self.qcvar])
         self.data = pd.merge(civet_output.data, user_ratings.data, on=self.idvar).dropna()
         self.features = self.data[self.civet_vars]
         self.target = self.data[self.qcvar]
