@@ -1,21 +1,13 @@
 #!/usr/bin/env python
 
-import argparse
+from civetqc.parse_args import parse_args
 from civetqc.core import Dataset
 import sys
 
 
-def parse_args(args) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog="civetqc")
-    parser.add_argument("civet_output", type=str, nargs=1, help="Path to CSV file outputted by CIVET for QC")
-    parser.add_argument("user_ratings", type=str, nargs=1, help="Path to CSV file containing user QC ratings")
-    parser.add_argument("output_dir", type=str, nargs=1, help="Path to directory where results will be outputted")
-    return parser.parse_args(args)
-
-
 def main() -> None:
     args = parse_args(sys.argv[1:])
-    dataset = Dataset(args.civet_output[0], args.user_ratings[0])
+    dataset = Dataset(args.civet_output, args.user_ratings)
     print(dataset.data)
 
 

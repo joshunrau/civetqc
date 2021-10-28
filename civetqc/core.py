@@ -21,6 +21,11 @@ class BaseData:
     
     Methods
     -------
+
+    __eq__(self, other: object)
+        To return True, all keys in __dict__ must be equal, as must all
+        pd.Series, pd.DataFrame, and str instance attributes
+
     vars_in_cols(self, list_vars: list)
         returns whether all strings in list_vars are in data.columns
 
@@ -65,6 +70,21 @@ class BaseData:
         if not self.is_unique(self.data[self.idvar]):
             raise RuntimeError(f"Non-unique values for ID variable in file {path_csv}")
     
+    def __eq__(self, other: object) -> bool:
+        if self.__dict__.keys() != other.__dict__.keys():
+            return False
+        for key in self.__dict__.keys():
+            if isinstance(self.__dict__[key], str):
+                if not self.__dict__[key] == other.__dict__[key]:
+                    return False
+            if isinstance(self.__dict__[key], pd.Series):
+                if not (all(self.__dict__[key] == other.__dict__[key])):
+                    return False
+            if isinstance(self.__dict__[key], pd.DataFrame):
+                if not self.data.equals(other.data):
+                    return False
+        return True
+
     def vars_in_cols(self, list_vars: list) -> bool:
         for var in list_vars:
             if var not in self.data.columns:
