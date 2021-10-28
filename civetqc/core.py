@@ -17,11 +17,26 @@ class DuplicateIdentifierError(Exception):
 
 
 class Dataset:
+    """ 
+    Class with methods to setup data from csv file for analysis
+    
+    ...
+
+    Attributes
+    ----------
+
+    idvar : str
+        the name of the ID variable which must be in imported csv files
+
+    data : pd.DataFrame
+        dataframe imported from path_csv
+    
+    """
 
     idvar = "ID"
 
     def __init__(self, path_csv: str, required_vars: list) -> None:
-
+        
         # Ensure file exists and has .csv extension
         if not os.path.isfile(path_csv):
             raise FileNotFoundError(f"File '{path_csv}' does not exist")
@@ -36,7 +51,7 @@ class Dataset:
         # Ensure all values for ID variable are unique
         if not self.is_unique(self.data[self.idvar]):
             raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {path_csv}")
-
+        
     def vars_in_cols(self, list_vars) -> bool:
         for var in list_vars:
             if var not in self.data.columns:
@@ -112,6 +127,9 @@ class CivetData(CivetOutput, UserRatings):
             knn = KNeighborsClassifier(n_neighbors=i)
             knn.fit(self.feat_train, self.targ_train)
             targ_pred = knn.predict(self.feat_test)
+            print(sum(self.data["QC"] == '2')/len(self.data))
+            print(sum(self.data["QC"] == '1')/len(self.data))
+            print(sum(self.data["QC"] == '0')/len(self.data))
             print(targ_pred)
             print(list(self.targ_test))
             print("Test set score: {:.2f}".format(np.mean(targ_pred == self.targ_test)))
