@@ -133,3 +133,4 @@ dmypy.json
 
 # Patient data
 data/LAM/
+data/UKBB/
