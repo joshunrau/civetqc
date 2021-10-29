@@ -1,5 +1,5 @@
 .DEFAULT_GOAL:= clean-install
-.PHONY: clean requirements install clean-install
+.PHONY: clean requirements install test clean-install
 
 clean:
 	rm -fr build/
