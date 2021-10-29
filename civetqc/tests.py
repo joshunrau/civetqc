@@ -31,28 +31,22 @@ class Test(unittest.TestCase):
         self.assertRaises(RuntimeError, Dataset, "/Users/joshua/Developer/civetqc/data/tests/duplicated_id.csv", [])
     
     def test__eq__(self):
-        return None
-        
+        ex_df = pd.DataFrame({"x": [1, 2, 3]})
         dat1, dat2 = deepcopy(self.dat), deepcopy(self.dat)
         self.assertEqual(dat1, dat2)
-
-        dat1.test = 1
-        self.assertNotEqual(dat1, dat2)
-        dat2.test = 2
-        self.assertEqual(dat1, dat2)
-
-        print(dat1.idvar == dat2.idvar)  # true
-
+        self.assertNotEqual(dat1, ex_df)
         dat1.idvar = ""
-        print(dat1.idvar == dat2.idvar)  # false
         self.assertNotEqual(dat1, dat2)
         dat1.idvar = "ID"
-
-        print(dat1.idvar == dat2.idvar)  # true
-        self.assertEqual(dat1, dat2)  # why not???
-
-        #dat1.test, dat2.test = pd.Series([1,2]), pd.Series([1,2])
-
+        self.assertEqual(dat1, dat2)
+        dat1.qcvar = ""
+        self.assertNotEqual(dat1, dat2)
+        dat1.qcvar = "QC"
+        self.assertEqual(dat1, dat2)
+        dat1.data = ex_df
+        self.assertNotEqual(dat1, dat2)
+        dat1.data = dat2.data
+        self.assertEqual(dat1, dat2)
 
     def test_vars_in_cols(self):
         vars = [self.dat.idvar, self.dat.qcvar] + self.dat.civet_vars
