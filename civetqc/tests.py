@@ -4,6 +4,7 @@ from numpy import NaN
 import os
 from .parse_args import parse_args
 import pandas as pd
+from sklearn.neighbors import KNeighborsClassifier
 import unittest
 
 
@@ -68,12 +69,25 @@ class TestDataset(unittest.TestCase):
 
 class TestModeler(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.test_models = deepcopy(Modeler.saved_models)
+        for key in cls.test_models:
+            cls.test_models[key] = cls.test_models[key].replace(".pickle", ".test")
+
     def setUp(self) -> None:
         self.model = Modeler(PATH_CIVET_OUTPUT, PATH_USER_RATINGS)
 
     def test_data(self):
         self.assertEqual(self.model.data.shape, (333, 42))
     
+    def test_save_load(self):
+        self.model.train_knn(6)
+        self.model.save_model(self.model.knn, self.test_models["KNN"])
+        saved_knn = self.model.load_model(self.test_models["KNN"])
+        self.assertIsInstance(saved_knn, KNeighborsClassifier)
+        os.remove(self.test_models["KNN"])
+
 
 class TestParser(unittest.TestCase):
 

@@ -1,8 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 import typing
 
 
@@ -155,6 +157,12 @@ class Modeler(Dataset):
 
     """
 
+
+    saved_models = {
+        "KNN" : "./data/models/knn.pickle",
+    }
+
+
     def __init__(self, civet_csv: str, user_csv: str) -> None:
         """
         Parameters
@@ -172,11 +180,30 @@ class Modeler(Dataset):
         self.feat_train, self.feat_test, self.targ_train, self.targ_test = train_test_split(
             self.features, self.target, random_state=0)
     
-    def knn(self, r: typing.Union[int, range]) -> None:
-        if type(r) == int:
-            r = range(r, r+1)
-        for i in r:
-            knn = KNeighborsClassifier(n_neighbors=i)
-            knn.fit(self.feat_train, self.targ_train)
-            targ_pred = knn.predict(self.feat_test)
-            print("Test set score: {:.2f}".format(np.mean(targ_pred == self.targ_test)))
+    def train_knn(self, k):
+        self.knn = KNeighborsClassifier(n_neighbors=k)
+        self.knn.fit(self.feat_train, self.targ_train)
+        targ_pred = self.knn.predict(self.feat_test)
+        self.print_targ_score(targ_pred, self.targ_test)
+    
+    def train_nn(self):
+        clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+        clf.fit(self.feat_train, self.targ_train)
+        targ_pred = clf.predict(self.feat_test)
+        self.print_targ_score(targ_pred, self.targ_test)
+
+    @staticmethod
+    def print_targ_score(predicted, actual):
+        print("Test set score: {:.2f}".format(np.mean(predicted == actual)))
+
+    @staticmethod
+    def save_model(model, filepath):
+        with open(filepath, 'wb') as f:
+            pickle.dump(model, f)
+            
+    @staticmethod
+    def load_model(filepath):
+        with open(filepath, 'rb') as f:
+            model = pickle.load(f)
+        return model
+
