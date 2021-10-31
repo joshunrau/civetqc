@@ -1,13 +1,16 @@
 import os
 import pandas as pd
 import typing
+from sklearn.model_selection import train_test_split
 
 
 class InvalidFileFormatError(Exception):
     pass
 
+
 class VariableNotFoundError(Exception):
     pass
+
 
 class DuplicateIdentifierError(Exception):
     pass
@@ -15,7 +18,7 @@ class DuplicateIdentifierError(Exception):
 
 class Dataset:
     """ 
-    Class with methods to setup data from csv file for analysis
+    Class with methods to setup data from csv files for analysis
     
     ...
 
@@ -31,18 +34,33 @@ class Dataset:
     civet_vars : list
         the features outputted by CIVET
 
-    data : pd.DataFrame
-        dataframe imported from path_csv
+    df : pd.DataFrame
+        merged dataframe created from CIVET and user data
+
+    features : pd.DataFrame
+        subset of data containing features from the CIVET QC output
+
+    target: pd.Series
+        subset of data containing the known QC ratings by the user
+
+    feat_train: pd.DataFrame
+        training set of features (75%)
+
+    feat_test: pd.DataFrame
+        testing set of features (25%)
+
+    targ_train: pd.Series
+        training set of target (75%)
+
+    targ_test: pd. Series
+        testing set of target (25%)
     
     Methods
     -------
 
-    __eq__(self, o: object)
-        Returns True if o is an object of self.__class__ and idvar, 
-        qcvar, and data are equal in both objects
-
-    vars_in_cols(self, list_vars: list)
-        returns whether all strings in list_vars are in data.columns
+    __eq__(self, other: object)
+        Returns True if other is an object of self.__class__ and idvar,
+        qcvar, and df are equal in both objects
 
     write_data(self, output_dir: str, filename: str)
         writes data to filename in output_dir
@@ -52,7 +70,10 @@ class Dataset:
 
     print_data(self, var: typing.Optional[str]=None)
         prints data with all rows and columns, or data[var] with all rows
-    
+
+    vars_in_cols(df: pd.DataFrame, list_vars: list)
+        returns whether all strings in list_vars are in df.columns
+
     is_unique(s: pd.Series)
         returns whether all values in series are unique
 
@@ -63,68 +84,82 @@ class Dataset:
 
     idvar = "ID"
     qcvar = "QC"
-    
+
     civet_vars = [
-        "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT", 
-        "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL", 
-        "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA", 
-        "RIGHT_WM_AREA", "RIGHT_MID_AREA", "RIGHT_GM_AREA", "GI_LEFT", "GI_RIGHT", 
+        "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT",
+        "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL",
+        "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA",
+        "RIGHT_WM_AREA", "RIGHT_MID_AREA", "RIGHT_GM_AREA", "GI_LEFT", "GI_RIGHT",
         "LEFT_INTER", "RIGHT_INTER", "LEFT_SURF_SURF", "RIGHT_SURF_SURF", "LAPLACIAN_MIN",
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
-        ]
+    ]
 
-    def __init__(self, path_csv: str, required_vars: list) -> None:
+    def __init__(self,  civet_csv: str, user_csv: str) -> None:
         """
         Parameters
         ----------
-        path_csv: str
-            path to csv file to import
-        required_vars: list
-            list of variables required to be in csv file
+        civet_csv: str
+            path to the csv file outputted by CIVET
+        user_csv: str
+            path to the csv file containing the user's QC ratings
         """
 
-        if not os.path.isfile(path_csv):
-            raise FileNotFoundError(f"File '{path_csv}' does not exist")
-        if not self.is_csv(path_csv):
-            raise InvalidFileFormatError(f"File '{path_csv}' must be in csv format")
+        for filepath in civet_csv, user_csv:
+            if not os.path.isfile(filepath):
+                raise FileNotFoundError(f"File '{filepath}' does not exist")
+            if not self.is_csv(filepath):
+                raise InvalidFileFormatError(f"File '{filepath}' must be in csv format")
 
-        self.data = pd.read_csv(path_csv)
+        civet_data = pd.read_csv(civet_csv)
+        user_ratings = pd.read_csv(user_csv)
 
-        if not self.vars_in_cols(required_vars):
-            raise VariableNotFoundError(f"Required variable not found in file {path_csv}")
-        if not self.is_unique(self.data[self.idvar]):
-            raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {path_csv}")
+        if not self.vars_in_cols(civet_data, [self.idvar] + self.civet_vars):
+            raise VariableNotFoundError(f"Required variable not found in file {civet_csv}")
+        if not self.vars_in_cols(user_ratings, [self.idvar, self.qcvar]):
+            raise VariableNotFoundError(f"Required variable not found in file {user_csv}")
 
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, self.__class__):
+        if not self.is_unique(civet_data[self.idvar]):
+            raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {civet_csv}")
+        if not self.is_unique(user_ratings[self.idvar]):
+            raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {user_csv}")
+
+        self.df = pd.merge(civet_data, user_ratings, on=self.idvar).dropna()
+        self.features = self.df[self.civet_vars]
+        self.target = self.df[self.qcvar]
+        self.feat_train, self.feat_test, self.targ_train, self.targ_test = train_test_split(
+            self.features, self.target, random_state=0)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, self.__class__):
             return False
-        return self.idvar == o.idvar and self.qcvar == o.qcvar and self.data.equals(o.data)
+        return self.idvar == other.idvar and self.qcvar == other.qcvar and self.df.equals(other.df)
 
-    def vars_in_cols(self, list_vars: list) -> bool:
-        for var in list_vars:
-            if var not in self.data.columns:
-                return False
-        return True
-    
     def write_data(self, output_dir: str, filename: str) -> None:
         assert os.path.isdir(output_dir)  # should check for this in case
-        self.data.to_csv(path_or_buf = os.path.join(output_dir, filename))
+        self.df.to_csv(path_or_buf=os.path.join(output_dir, filename))
 
     def col_to_numeric(self, var: str) -> None:
-        self.data[var] = self.data[var].apply(pd.to_numeric, errors='coerce')
-    
-    def print_data(self, var: typing.Optional[str]=None) -> None:
+        self.df[var] = self.df[var].apply(pd.to_numeric, errors='coerce')
+
+    def print_data(self, var: typing.Optional[str] = None) -> None:
         if var is None:
             with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-                print(self.data)
+                print(self.df)
         else:
             with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-                print(self.data[var])
+                print(self.df[var])
+
+    @staticmethod
+    def vars_in_cols(df: pd.DataFrame, list_vars: list) -> bool:
+        for var in list_vars:
+            if var not in df.columns:
+                return False
+        return True
 
     @staticmethod
     def is_unique(s: pd.Series) -> bool:
         return len(s.unique()) == len(s)
-    
+
     @staticmethod
     def is_csv(filepath: str) -> bool:
         return filepath.split(".")[-1] == "csv"
