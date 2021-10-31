@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from civetqc.parse_args import parse_args
-from civetqc.core import Modeler
+from civetqc.parser import parse_args
+from civetqc.modeler import Modeler
 import sys
 
 

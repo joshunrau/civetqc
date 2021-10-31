@@ -1,8 +1,9 @@
-from .core import Dataset, Modeler
+from .dataset import Dataset, InvalidFileFormatError, VariableNotFoundError, DuplicateIdentifierError
+from .modeler import Modeler
 from copy import deepcopy
 from numpy import NaN
 import os
-from .parse_args import parse_args
+from .parser import parse_args
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 import unittest
@@ -27,9 +28,9 @@ class TestDataset(unittest.TestCase):
     
     def test_error_handling(self):
         self.assertRaises(FileNotFoundError, Dataset, "/Users/joshua/doesnotexist.csv", [])
-        self.assertRaises(ValueError, Dataset, "/Users/joshua/Developer/civetqc/data/tests/invalid_format.txt", [])
-        self.assertRaises(RuntimeError, Dataset, "/Users/joshua/Developer/civetqc/data/tests/duplicated_id.csv", [])
-        self.assertRaises(RuntimeError, Dataset, "/Users/joshua/Developer/civetqc/data/tests/invalid_var.csv", ["ID", "QC"])
+        self.assertRaises(InvalidFileFormatError, Dataset, "/Users/joshua/Developer/civetqc/data/tests/invalid_format.txt", [])
+        self.assertRaises(DuplicateIdentifierError, Dataset, "/Users/joshua/Developer/civetqc/data/tests/duplicated_id.csv", [])
+        self.assertRaises(VariableNotFoundError, Dataset, "/Users/joshua/Developer/civetqc/data/tests/invalid_var.csv", ["ID", "QC"])
 
     def test_equality_operator(self):
         example_df = pd.DataFrame({"x": [1, 2, 3]})
