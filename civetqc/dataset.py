@@ -12,6 +12,7 @@ class VariableNotFoundError(Exception):
 class DuplicateIdentifierError(Exception):
     pass
 
+
 class Dataset:
     """ 
     Class with methods to setup data from csv file for analysis
