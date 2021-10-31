@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 from civetqc.parse_args import parse_args
-from civetqc.core import Dataset
+from civetqc.core import Modeler
 import sys
 
 
 def main() -> None:
     args = parse_args(sys.argv[1:])
-    dataset = Dataset(args.civet_output, args.user_ratings)
-    print(dataset.data)
+    model = Modeler(args.civet_output, args.user_ratings)
+    print(model.data.shape)
 
 
 if __name__ == "__main__":

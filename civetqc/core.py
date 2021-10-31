@@ -1,10 +1,12 @@
 import os
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 import typing
 
 
-class BaseData:
+class Dataset:
     """ 
     Class with methods to setup data from csv file for analysis
     
@@ -121,7 +123,7 @@ class BaseData:
         return filepath.split(".")[-1] == "csv"
 
 
-class Dataset(BaseData):
+class Modeler(Dataset):
     """ 
     Class used to merge and organize data for analysis
     
@@ -131,7 +133,7 @@ class Dataset(BaseData):
     ----------
 
     data : pd.DataFrame
-        merged dataframe created from CivetData and UserData objects when instantiated
+        merged dataframe created from CIVET and user data
     
     features : pd.DataFrame
         subset of data containing features from the CIVET QC output
@@ -162,10 +164,19 @@ class Dataset(BaseData):
         user_csv: str
             path to the csv file containing the user's QC ratings
         """
-        civet_output = BaseData(civet_csv, [self.idvar] + self.civet_vars)
-        user_ratings = BaseData(user_csv, [self.idvar, self.qcvar])
+        civet_output = Dataset(civet_csv, [self.idvar] + self.civet_vars)
+        user_ratings = Dataset(user_csv, [self.idvar, self.qcvar])
         self.data = pd.merge(civet_output.data, user_ratings.data, on=self.idvar).dropna()
         self.features = self.data[self.civet_vars]
         self.target = self.data[self.qcvar]
         self.feat_train, self.feat_test, self.targ_train, self.targ_test = train_test_split(
             self.features, self.target, random_state=0)
+    
+    def knn(self, r: typing.Union[int, range]) -> None:
+        if type(r) == int:
+            r = range(r, r+1)
+        for i in r:
+            knn = KNeighborsClassifier(n_neighbors=i)
+            knn.fit(self.feat_train, self.targ_train)
+            targ_pred = knn.predict(self.feat_test)
+            print("Test set score: {:.2f}".format(np.mean(targ_pred == self.targ_test)))
