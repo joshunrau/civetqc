@@ -1,7 +1,0 @@
-#!/bin/bash
-
-PATH_CIVET_OUTPUT="/Users/joshua/Developer/civetqc/data/LAM/civet_data.csv"
-PATH_USER_RATINGS="/Users/joshua/Developer/civetqc/data/LAM/user_ratings.csv"
-OUTPUT_DIR="/Users/joshua/Developer/civetqc/data/tests"
-
-civetqc -b 1 -o $OUTPUT_DIR $PATH_CIVET_OUTPUT $PATH_USER_RATINGS

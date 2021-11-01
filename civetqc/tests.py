@@ -5,6 +5,7 @@ import os
 from .parser import parse_args
 import pandas as pd
 import unittest
+import subprocess
 
 
 PATH_CIVET_OUTPUT = "/Users/joshua/Developer/civetqc/data/LAM/civet_data.csv"
@@ -74,3 +75,7 @@ class TestParser(unittest.TestCase):
         parser = parse_args([PATH_CIVET_OUTPUT, PATH_USER_RATINGS])
         dataset = Dataset(parser.civet_output, parser.user_ratings)
         self.assertEqual(dataset, self.dataset)
+    
+    def test_shell(self):
+        cmd = subprocess.run(["civetqc", PATH_CIVET_OUTPUT, PATH_USER_RATINGS])
+        self.assertEqual(cmd.returncode, 0)

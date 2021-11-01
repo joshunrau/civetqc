@@ -4,13 +4,13 @@ This utility allows for semi-automated quality control of CIVET outputs. Based o
 
 ## Usage
 
-    usage: civetqc [-h] [-b <int>] [-o <str>] civet_output user_ratings
+    usage: civetqc [-h] [--cutoff <int>] [--output <str>] civet_output user_ratings
 
     positional arguments:
-    civet_output  path to CSV file outputted by CIVET for QC
-    user_ratings  path to CSV file containing user QC ratings
+    civet_output    path to CSV file outputted by CIVET for QC
+    user_ratings    path to CSV file containing user QC ratings
 
     optional arguments:
-    -h, --help    show this help message and exit
-    -b <int>      recode QC ratings with binary cutoff
-    -o <str>      path to output directory
+    -h, --help      show this help message and exit
+    --cutoff <int>  cutoff value for acceptable QC
+    --output <str>  path to output directory
