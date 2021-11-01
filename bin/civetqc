@@ -7,8 +7,8 @@ import sys
 
 def main() -> None:
     args = parse_args(sys.argv[1:])
-    model = Dataset(args.civet_output, args.user_ratings)
-    print(model.df.shape)
+    dataset = Dataset(args.civet_output, args.user_ratings)
+    print(args.b)
 
 
 if __name__ == "__main__":

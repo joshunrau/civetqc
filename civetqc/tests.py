@@ -71,6 +71,6 @@ class TestParser(unittest.TestCase):
         self.dataset = Dataset(PATH_CIVET_OUTPUT, PATH_USER_RATINGS)
 
     def test_parser(self):
-        parser = parse_args([PATH_CIVET_OUTPUT, PATH_USER_RATINGS, OUTPUT_DIR])
+        parser = parse_args([PATH_CIVET_OUTPUT, PATH_USER_RATINGS])
         dataset = Dataset(parser.civet_output, parser.user_ratings)
         self.assertEqual(dataset, self.dataset)
