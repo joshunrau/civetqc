@@ -57,7 +57,7 @@ class TestDataset(unittest.TestCase):
         self.assertTrue(all([isinstance(x, str) for x in self.dataset.df["TEST"]]))
         self.dataset.col_to_numeric("TEST")
         self.assertTrue(all([isinstance(x, (int, float, NaN)) for x in self.dataset.df["TEST"]]))
-
+    
     def test_vars_in_cols(self):
         required_vars = [self.dataset.idvar, self.dataset.qcvar] + self.dataset.civet_vars
         self.assertTrue(self.dataset.vars_in_cols(self.dataset.df, required_vars))

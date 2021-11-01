@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import typing
 from sklearn.model_selection import train_test_split
@@ -70,10 +71,13 @@ class Dataset:
 
     print_data(self, var: typing.Optional[str]=None)
         prints data with all rows and columns, or data[var] with all rows
+    
+    all_in_range(self, var: str, r: int)
+        returns whether all values in self.df[var] are in range(r)
 
     vars_in_cols(df: pd.DataFrame, list_vars: list)
         returns whether all strings in list_vars are in df.columns
-
+    
     is_unique(s: pd.Series)
         returns whether all values in series are unique
 
@@ -94,7 +98,7 @@ class Dataset:
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
     ]
 
-    def __init__(self,  civet_csv: str, user_csv: str) -> None:
+    def __init__(self,  civet_csv: str, user_csv: str, recode_binary=True) -> None:
         """
         Parameters
         ----------
@@ -102,6 +106,8 @@ class Dataset:
             path to the csv file outputted by CIVET
         user_csv: str
             path to the csv file containing the user's QC ratings
+        recode_binary: bool
+            specify whether to recode all non-zero values as one
         """
 
         for filepath in civet_csv, user_csv:
@@ -122,8 +128,14 @@ class Dataset:
             raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {civet_csv}")
         if not self.is_unique(user_ratings[self.idvar]):
             raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {user_csv}")
-
+        
         self.df = pd.merge(civet_data, user_ratings, on=self.idvar).dropna()
+        self.col_to_numeric(self.qcvar)
+
+        if recode_binary:
+            self.df[self.qcvar] = np.where(self.df[self.qcvar] == 0, 0, 1)
+            assert self.all_in_range(self.qcvar, 2)
+        
         self.features = self.df[self.civet_vars]
         self.target = self.df[self.qcvar]
         self.feat_train, self.feat_test, self.targ_train, self.targ_test = train_test_split(
@@ -148,6 +160,13 @@ class Dataset:
         else:
             with pd.option_context('display.max_rows', None, 'display.max_columns', None):
                 print(self.df[var])
+    
+    def all_in_range(self, var: str, r: int) -> bool:
+        for value in self.df[var]:
+            if value not in range(r):
+                return False
+        return True
+
 
     @staticmethod
     def vars_in_cols(df: pd.DataFrame, list_vars: list) -> bool:
