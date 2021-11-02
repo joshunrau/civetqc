@@ -2,34 +2,18 @@
 
 from civetqc.arguments import Arguments
 from civetqc.dataset import Dataset
+from civetqc.model import Model
 import sys
 
 
 def main() -> None:
     
-    arguments = Arguments(sys.argv[1:])
-    arguments.check_args()
-    
-    return None
+    cmd = Arguments(sys.argv[1:])
+    cmd.check_args()
 
-    args = parse_args(sys.argv[1:])
-
-    # BINARY
-    dataset = Dataset(args.civet_output, args.user_ratings, args.cutoff)
-    print(f"percent garbage: {sum(dataset.df['QC'] == 0) / len(dataset.df)}")
-    knn = KNeighborsClassifier(n_neighbors=6)
-    knn.fit(dataset.feat_train, dataset.targ_train)
-    predicted_target = knn.predict(dataset.feat_test)
-
-
-    precision = precision_score(dataset.targ_test, predicted_target, average='binary')
-    print(f"Precision: {round(precision, 2)}")
-
-    recall = recall_score(dataset.targ_test, predicted_target, average='binary')
-    print(f"Recall: {round(recall, 2)}")
-
-    f1 = f1_score(dataset.targ_test, predicted_target, average='binary')
-    print(f"F1: {round(f1, 2)}")
+    dataset = Dataset(cmd.args.civet_output, cmd.args.user_ratings, cmd.args.cutoff)
+    model = Model(dataset)
+    print(model)
 
 
 if __name__ == "__main__":
