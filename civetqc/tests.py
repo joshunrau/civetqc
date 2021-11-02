@@ -1,3 +1,4 @@
+from .core import Modeler
 from .dataset import Dataset, InvalidFileFormatError, VariableNotFoundError, DuplicateIdentifierError
 from copy import deepcopy
 from numpy import NaN
