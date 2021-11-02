@@ -3,7 +3,6 @@ import numpy as np
 import pickle
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import precision_score
 
 
 class SaveData:
@@ -21,12 +20,7 @@ class Modeler(Dataset):
 
         super().__init__(civet_csv, user_csv)
 
-        # KNN
-        self.knn = KNeighborsClassifier(n_neighbors=k)
-        self.knn.fit(self.feat_train, self.targ_train)
-        self.targ_pred = self.knn.predict(self.feat_test)
 
-        # calculate precision for binary classification problem
         precision = precision_score(self.targ_test, self.targ_pred, average='binary')
         print(precision)
 
