@@ -6,24 +6,29 @@ from civetqc.dataset import Dataset
 import sys
 
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import precision_score
+from sklearn.metrics import precision_score, recall_score, f1_score
 import numpy as np
+
 
 def main() -> None:
     args = parse_args(sys.argv[1:])
+
+    # BINARY
     dataset = Dataset(args.civet_output, args.user_ratings, args.cutoff)
+    print(f"percent garbage: {sum(dataset.df['QC'] == 0) / len(dataset.df)}")
     knn = KNeighborsClassifier(n_neighbors=6)
     knn.fit(dataset.feat_train, dataset.targ_train)
     predicted_target = knn.predict(dataset.feat_test)
+
     precision = precision_score(dataset.targ_test, predicted_target, average='binary')
-    print(f"Precision: {precision}")
+    print(f"Precision: {round(precision, 2)}")
 
-    print_target_score(predicted_target, dataset.targ_test)
+    recall = recall_score(dataset.targ_test, predicted_target, average='binary')
+    print(f"Recall: {round(recall, 2)}")
 
+    f1 = f1_score(dataset.targ_test, predicted_target, average='binary')
+    print(f"F1: {round(f1, 2)}")
 
-def print_target_score(predicted, actual):
-    print("Test set score: {:.2f}".format(np.mean(predicted == actual)))
-    
 
 if __name__ == "__main__":
     main()
