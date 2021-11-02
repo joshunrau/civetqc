@@ -20,6 +20,6 @@ st:
 	./bin/shell_test
 
 test:
-	python -m unittest discover .
+	python -m unittest discover tests
 
 clean-install: clean install

@@ -5,10 +5,6 @@ import typing
 from sklearn.model_selection import train_test_split
 
 
-class InvalidFileFormatError(Exception):
-    pass
-
-
 class VariableNotFoundError(Exception):
     pass
 
@@ -81,9 +77,6 @@ class Dataset:
     is_unique(s: pd.Series)
         returns whether all values in series are unique
 
-    is_csv(filepath)
-        returns whether filepath ends with .csv
-
     """
 
     idvar = "ID"
@@ -98,7 +91,7 @@ class Dataset:
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
     ]
 
-    def __init__(self,  civet_csv: str, user_csv: str, recode_binary=True) -> None:
+    def __init__(self,  civet_csv: str, user_csv: str, cutoff_value: int = 1) -> None:
         """
         Parameters
         ----------
@@ -106,15 +99,9 @@ class Dataset:
             path to the csv file outputted by CIVET
         user_csv: str
             path to the csv file containing the user's QC ratings
-        recode_binary: bool
-            specify whether to recode all non-zero values as one
+        cutoff_value: int
+            the cutoff value for a valid scan
         """
-
-        for filepath in civet_csv, user_csv:
-            if not os.path.isfile(filepath):
-                raise FileNotFoundError(f"File '{filepath}' does not exist")
-            if not self.is_csv(filepath):
-                raise InvalidFileFormatError(f"File '{filepath}' must be in csv format")
 
         civet_data = pd.read_csv(civet_csv)
         user_ratings = pd.read_csv(user_csv)
@@ -132,12 +119,14 @@ class Dataset:
         self.df = pd.merge(civet_data, user_ratings, on=self.idvar).dropna()
         self.col_to_numeric(self.qcvar)
 
-        if recode_binary:
-            self.df[self.qcvar] = np.where(self.df[self.qcvar] == 0, 0, 1)
-            assert self.all_in_range(self.qcvar, 2)
+        if not all(self.df[self.qcvar] >= 0):
+            raise ValueError("Negative values are not permitted for QC ratings")
         
-        self.features = self.df[self.civet_vars]
-        self.target = self.df[self.qcvar]
+        self.df[self.qcvar] = np.where(self.df[self.qcvar] == 0, 0, 1)
+        assert self.all_in_range(self.qcvar, 2)
+        
+        self.features = self.df[self.civet_vars].to_numpy()
+        self.target = self.df[self.qcvar].to_numpy()
         self.feat_train, self.feat_test, self.targ_train, self.targ_test = train_test_split(
             self.features, self.target, random_state=0)
 
@@ -178,7 +167,3 @@ class Dataset:
     @staticmethod
     def is_unique(s: pd.Series) -> bool:
         return len(s.unique()) == len(s)
-
-    @staticmethod
-    def is_csv(filepath: str) -> bool:
-        return filepath.split(".")[-1] == "csv"
