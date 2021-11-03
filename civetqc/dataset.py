@@ -13,6 +13,39 @@ class DuplicateIdentifierError(Exception):
     pass
 
 
+class SplitData:
+    """ encapsulates features and target for testing and training sets """
+
+    def __init__(self, train: np.ndarray, test: np.ndarray) -> None:
+        assert isinstance(train, np.ndarray) and isinstance(test, np.ndarray)
+        self.train, self.test = train, test
+    
+    @staticmethod
+    def get_array_counts(arr: np.ndarray) -> dict:
+        assert isinstance(arr, np.ndarray) and arr.ndim == 1
+        counts_array = np.array(np.unique(arr, return_counts=True)).T
+        list_strings = []
+        for i in range(len(counts_array)):
+            list_strings.append(f"{counts_array[i, 0]}: {counts_array[i, 1]}")
+        return "\n".join(list_strings)
+
+
+class Features(SplitData):
+    pass
+
+
+class Target(SplitData):
+    def __str__(self) -> str:
+        return (
+            "\nCOUNTS\n"
+            "----------------------------------------------------------------------\n"
+            f"\nTrain (N={len(self.train)})\n"
+            f"{self.get_array_counts(self.train)}\n"
+            f"\nTest (N={len(self.test)})\n"
+            f"{self.get_array_counts(self.test)}\n"
+        )
+
+
 class Dataset:
     """ 
     Class with methods to setup data from csv files for analysis
@@ -78,7 +111,7 @@ class Dataset:
         returns whether all values in series are unique
 
     """
-
+    
     idvar = "ID"
     qcvar = "QC"
 
@@ -91,7 +124,7 @@ class Dataset:
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
     ]
 
-    def __init__(self,  civet_csv: str, user_csv: str, cutoff_value: int = 1) -> None:
+    def __init__(self, civet_csv: str, user_csv: str, cutoff_value: int = 1) -> None:
         """
         Parameters
         ----------
@@ -124,12 +157,13 @@ class Dataset:
         
         self.df[self.qcvar] = np.where(self.df[self.qcvar] == 0, 0, 1)
         assert self.all_in_range(self.qcvar, 2)
-        
-        self.features = self.df[self.civet_vars].to_numpy()
-        self.target = self.df[self.qcvar].to_numpy()
-        self.feat_train, self.feat_test, self.targ_train, self.targ_test = train_test_split(
-            self.features, self.target, random_state=0)
 
+        features_array = self.df[self.civet_vars].to_numpy()
+        target_array = self.df[self.qcvar].to_numpy()
+        x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=0)
+        self.features = Features(x_train, x_test)
+        self.target = Target(y_train, y_test)
+    
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
@@ -155,7 +189,6 @@ class Dataset:
             if value not in range(r):
                 return False
         return True
-
 
     @staticmethod
     def vars_in_cols(df: pd.DataFrame, list_vars: list) -> bool:

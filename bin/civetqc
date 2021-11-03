@@ -2,7 +2,7 @@
 
 from civetqc.arguments import Arguments
 from civetqc.dataset import Dataset
-from civetqc.model import Model
+from civetqc.modeler import Modeler
 import sys
 
 
@@ -11,8 +11,7 @@ def main() -> None:
     cmd = Arguments(sys.argv[1:])
     cmd.check_args()
 
-    dataset = Dataset(cmd.args.civet_output, cmd.args.user_ratings, cmd.args.cutoff)
-    model = Model(dataset)
+    model = Modeler(cmd.args.civet_output, cmd.args.user_ratings, cmd.args.cutoff)
     print(model)
 
 
