@@ -13,37 +13,10 @@ class DuplicateIdentifierError(Exception):
     pass
 
 
-class SplitData:
-    """ encapsulates features and target for testing and training sets """
-
+class DataPartition:
     def __init__(self, train: np.ndarray, test: np.ndarray) -> None:
         assert isinstance(train, np.ndarray) and isinstance(test, np.ndarray)
         self.train, self.test = train, test
-    
-    @staticmethod
-    def get_array_counts(arr: np.ndarray) -> dict:
-        assert isinstance(arr, np.ndarray) and arr.ndim == 1
-        counts_array = np.array(np.unique(arr, return_counts=True)).T
-        list_strings = []
-        for i in range(len(counts_array)):
-            list_strings.append(f"{counts_array[i, 0]}: {counts_array[i, 1]}")
-        return "\n".join(list_strings)
-
-
-class Features(SplitData):
-    pass
-
-
-class Target(SplitData):
-    def __str__(self) -> str:
-        return (
-            "\nCOUNTS\n"
-            "----------------------------------------------------------------------\n"
-            f"\nTrain (N={len(self.train)})\n"
-            f"{self.get_array_counts(self.train)}\n"
-            f"\nTest (N={len(self.test)})\n"
-            f"{self.get_array_counts(self.test)}\n"
-        )
 
 
 class Dataset:
@@ -161,13 +134,26 @@ class Dataset:
         features_array = self.df[self.civet_vars].to_numpy()
         target_array = self.df[self.qcvar].to_numpy()
         x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=0)
-        self.features = Features(x_train, x_test)
-        self.target = Target(y_train, y_test)
+        self.features = DataPartition(x_train, x_test)
+        self.target = DataPartition(y_train, y_test)
     
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
         return self.idvar == other.idvar and self.qcvar == other.qcvar and self.df.equals(other.df)
+
+    def __str__(self) -> str:
+        return (
+            "Dataset Object\n"
+            "----------------------------------------------------------------------\n"
+            "General Information:\n"
+            f"Number of Observations: {len(self.df)}\n\n"
+            "Target:\n"
+            f"Train (N={len(self.target.train)})\n"
+            f"{self.get_array_counts(self.target.train)}\n"
+            f"Test\n"
+            f"{self.get_array_counts(self.target.test)}\n"
+        )
 
     def write_data(self, output_dir: str, filename: str) -> None:
         assert os.path.isdir(output_dir)  # should check for this in case
@@ -200,3 +186,12 @@ class Dataset:
     @staticmethod
     def is_unique(s: pd.Series) -> bool:
         return len(s.unique()) == len(s)
+    
+    @staticmethod
+    def get_array_counts(arr: np.ndarray) -> dict:
+        assert isinstance(arr, np.ndarray) and arr.ndim == 1
+        counts_array = np.array(np.unique(arr, return_counts=True)).T
+        list_strings = []
+        for i in range(len(counts_array)):
+            list_strings.append(f"{counts_array[i, 0]}: {counts_array[i, 1]}")
+        return "\n".join(list_strings)

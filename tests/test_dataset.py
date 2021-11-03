@@ -53,3 +53,6 @@ class TestDataset(unittest.TestCase):
         self.assertTrue(self.dataset.vars_in_cols(self.dataset.df, required_vars))
         required_vars.append("TEST")
         self.assertFalse(self.dataset.vars_in_cols(self.dataset.df, required_vars))
+    
+    def test_str(self):
+        print("\n", self.dataset)
