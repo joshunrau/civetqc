@@ -9,8 +9,5 @@ class TestModel(unittest.TestCase):
     def setUp(self) -> None:
         self.dataset = Dataset(CIVET_OUTPUT, USER_RATINGS, 1)
         self.model = Modeler(CIVET_OUTPUT, USER_RATINGS, 1)
-    
-    def test_init(self):
-        print(self.dataset.target)
 
     

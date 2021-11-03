@@ -14,7 +14,12 @@ class Arguments:
             parser.add_argument("user_ratings", type=str, help="path to CSV file containing user QC ratings")
             parser.add_argument("--cutoff", metavar="<int>", type=int, default=1, help="cutoff value for acceptable QC")
             parser.add_argument("--output", metavar="<str>", type=str, default=os.getcwd(), help="path to output directory")
+            parser.add_argument("--verbose", action="store_true", help="use verbose output")
             self.args = parser.parse_args(args)
+            self.check_valid_files()
+            self.check_valid_cutoff()
+            self.check_output_dir()
+            assert isinstance(self.args.verbose, bool)
     
     def check_valid_files(self):
         for filename in self.args.civet_output, self.args.user_ratings:
@@ -30,8 +35,3 @@ class Arguments:
     def check_output_dir(self):
         if not os.path.isdir(self.args.output):
             raise NotADirectoryError("Directory {self.args.output} does not exist")
-    
-    def check_args(self):
-        self.check_valid_files()
-        self.check_valid_cutoff()
-        self.check_output_dir()

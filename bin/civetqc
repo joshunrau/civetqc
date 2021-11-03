@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from civetqc.arguments import Arguments
-from civetqc.dataset import Dataset
 from civetqc.modeler import Modeler
 import sys
 
@@ -9,11 +8,16 @@ import sys
 def main() -> None:
     
     cmd = Arguments(sys.argv[1:])
-    cmd.check_args()
 
+    if cmd.args.verbose:
+        vprint = print
+        vprint("Using verbose output...")
+    else:
+        vprint = lambda *a, **k: None
+    
+    vprint("Creating Modeler...")
     model = Modeler(cmd.args.civet_output, cmd.args.user_ratings, cmd.args.cutoff)
-    print(model)
-
+    vprint("Done!")
 
 if __name__ == "__main__":
     main()

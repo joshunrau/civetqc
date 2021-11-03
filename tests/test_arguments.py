@@ -28,5 +28,9 @@ class TestArguments(unittest.TestCase):
     def test_shell(self):
         cmd = subprocess.run(["civetqc", CIVET_OUTPUT, USER_RATINGS])
         self.assertEqual(cmd.returncode, 0)
-        
     
+    def test_verbose(self):
+        cmd1 = subprocess.run(["civetqc", CIVET_OUTPUT, USER_RATINGS], capture_output=True, text=True)
+        self.assertNotIn("Using verbose output...", cmd1.stdout)
+        cmd2 = subprocess.run(["civetqc", "--verbose", CIVET_OUTPUT, USER_RATINGS], capture_output=True, text=True)
+        self.assertIn("Using verbose output...", cmd2.stdout)
