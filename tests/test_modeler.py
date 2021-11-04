@@ -10,4 +10,7 @@ class TestModel(unittest.TestCase):
         self.dataset = Dataset(CIVET_OUTPUT, USER_RATINGS, 1)
         self.model = Modeler(CIVET_OUTPUT, USER_RATINGS, 1)
 
+    def test(self):
+        print(self.model)
+
     

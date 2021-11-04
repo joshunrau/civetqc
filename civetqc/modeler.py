@@ -37,8 +37,12 @@ class Modeler(Dataset):
 
     def __init__(self, civet_csv: str, user_csv: str, cutoff_value: int = 1) -> None:
         super().__init__(civet_csv, user_csv, cutoff_value)
-        self.logistic_regression = Model(LogisticRegression().fit(self.features.train, self.target.train))
-        self.knn = Model(KNeighborsClassifier(n_neighbors=6))
+        # self.logistic_regression = Model(LogisticRegression().fit(self.features.train, self.target.train))
+        # self.knn = Model(KNeighborsClassifier(n_neighbors=6))
+
+    def __str__(self) -> str:
+        return super().__str__() + "test"
+
 
 
 
