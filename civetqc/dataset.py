@@ -1,19 +1,20 @@
-import os
 import numpy as np
 import pandas as pd
-import typing
 from sklearn.model_selection import train_test_split
 
 
 class VariableNotFoundError(Exception):
+    """ raised when a required variable is not found in CSV file """
     pass
 
 
 class DuplicateIdentifierError(Exception):
+    """ raised when a value for the ID variable appears more than once """
     pass
 
 
 class DataPartition:
+    """ container for test and training partitions of target or features """
     def __init__(self, train: np.ndarray, test: np.ndarray) -> None:
         assert isinstance(train, np.ndarray) and isinstance(test, np.ndarray)
         self.train, self.test = train, test
@@ -21,7 +22,7 @@ class DataPartition:
 
 class Dataset:
     """ 
-    Class with methods to setup data from csv files for analysis
+    Class used to import and organize data before modeling
     
     ...
 
@@ -30,65 +31,52 @@ class Dataset:
 
     idvar : str
         the name of the ID variable which must be in imported csv files
-    
     qcvar : str
         the name of the column containing user QC ratings
-
-    civet_vars : list
-        the features outputted by CIVET
-
+    civet_feature_names : list
+        a list of the names of the features outputted by CIVET
+    required_civet_vars : list
+        a list of variable names required to be in the CIVET output file
+    required_user_vars : list
+        a list of variable names required to be in the user ratings file
     df : pd.DataFrame
-        merged dataframe created from CIVET and user data
-
-    features : pd.DataFrame
-        subset of data containing features from the CIVET QC output
-
-    target: pd.Series
-        subset of data containing the known QC ratings by the user
-
-    feat_train: pd.DataFrame
-        training set of features (75%)
-
-    feat_test: pd.DataFrame
-        testing set of features (25%)
-
-    targ_train: pd.Series
-        training set of target (75%)
-
-    targ_test: pd. Series
-        testing set of target (25%)
+        merged dataframe created from CIVET output and user ratings
+    features : DataPartition
+        contains testing and training sets of features
+    target : DataPartition
+        contains testing and training sets of the target
     
-    Methods
-    -------
+    Operators
+    ---------
 
     __eq__(self, other: object)
         Returns True if other is an object of self.__class__ and idvar,
         qcvar, and df are equal in both objects
 
-    write_data(self, output_dir: str, filename: str)
-        writes data to filename in output_dir
-
-    col_to_numeric(self, var: str)
-        converts column in data to numeric, coercing non-numeric values to NaN
-
-    print_data(self, var: typing.Optional[str]=None)
-        prints data with all rows and columns, or data[var] with all rows
+    __str__(self)
+        TBD
+    
+    Instance Methods
+    ----------------
     
     all_in_range(self, var: str, r: int)
         returns whether all values in self.df[var] are in range(r)
 
-    vars_in_cols(df: pd.DataFrame, list_vars: list)
-        returns whether all strings in list_vars are in df.columns
-    
-    is_unique(s: pd.Series)
-        returns whether all values in series are unique
+    Static Methods
+    --------------
+
+    vars_in_cols(df: pd.DataFrame, list_vars: list, filename: str)
+        raises a VariableNotFoundError if all strings in list_vars are not in df.columns
+    is_unique(s: pd.Series, var_name: str, filename: str)
+        raises a DuplicateIdentifierError if there are any non-unique values in s
+    get_array_counts(arr: np.ndarray)
+        returns a dictionary with the number of occurrences of each value in arr
 
     """
-    
+
     idvar = "ID"
     qcvar = "QC"
-
-    civet_vars = [
+    civet_feature_names = [
         "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT",
         "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL",
         "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA",
@@ -96,6 +84,8 @@ class Dataset:
         "LEFT_INTER", "RIGHT_INTER", "LEFT_SURF_SURF", "RIGHT_SURF_SURF", "LAPLACIAN_MIN",
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
     ]
+    required_civet_vars = [idvar] + civet_feature_names
+    required_user_vars = [idvar, qcvar]
 
     def __init__(self, civet_csv: str, user_csv: str, cutoff_value: int = 1) -> None:
         """
@@ -112,26 +102,22 @@ class Dataset:
         civet_data = pd.read_csv(civet_csv)
         user_ratings = pd.read_csv(user_csv)
 
-        if not self.vars_in_cols(civet_data, [self.idvar] + self.civet_vars):
-            raise VariableNotFoundError(f"Required variable not found in file {civet_csv}")
-        if not self.vars_in_cols(user_ratings, [self.idvar, self.qcvar]):
-            raise VariableNotFoundError(f"Required variable not found in file {user_csv}")
+        self.vars_in_cols(civet_data, self.required_civet_vars, civet_csv)
+        self.vars_in_cols(user_ratings, self.required_user_vars, user_csv)
 
-        if not self.is_unique(civet_data[self.idvar]):
-            raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {civet_csv}")
-        if not self.is_unique(user_ratings[self.idvar]):
-            raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {user_csv}")
-        
+        self.is_unique(civet_data[self.idvar], self.idvar, civet_csv)
+        self.is_unique(user_ratings[self.idvar], self.idvar, user_csv)
+    
         self.df = pd.merge(civet_data, user_ratings, on=self.idvar).dropna()
-        self.col_to_numeric(self.qcvar)
+        self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
 
         if not all(self.df[self.qcvar] >= 0):
             raise ValueError("Negative values are not permitted for QC ratings")
         
-        self.df[self.qcvar] = np.where(self.df[self.qcvar] == 0, 0, 1)
+        self.df[self.qcvar] = np.where(self.df[self.qcvar] < cutoff_value, 0, 1)
         assert self.all_in_range(self.qcvar, 2)
 
-        features_array = self.df[self.civet_vars].to_numpy()
+        features_array = self.df[self.civet_feature_names].to_numpy()
         target_array = self.df[self.qcvar].to_numpy()
         x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=0)
         self.features = DataPartition(x_train, x_test)
@@ -141,7 +127,7 @@ class Dataset:
         if not isinstance(other, self.__class__):
             return False
         return self.idvar == other.idvar and self.qcvar == other.qcvar and self.df.equals(other.df)
-
+    
     def __str__(self) -> str:
         return (
             "Dataset Object\n"
@@ -155,37 +141,33 @@ class Dataset:
             f"{self.get_array_counts(self.target.test)}\n"
         )
 
-    def write_data(self, output_dir: str, filename: str) -> None:
-        assert os.path.isdir(output_dir)  # should check for this in case
-        self.df.to_csv(path_or_buf=os.path.join(output_dir, filename))
-
-    def col_to_numeric(self, var: str) -> None:
-        self.df[var] = self.df[var].apply(pd.to_numeric, errors='coerce')
-
-    def print_data(self, var: typing.Optional[str] = None) -> None:
-        if var is None:
-            with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-                print(self.df)
-        else:
-            with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-                print(self.df[var])
-    
     def all_in_range(self, var: str, r: int) -> bool:
         for value in self.df[var]:
             if value not in range(r):
                 return False
         return True
-
+    
     @staticmethod
-    def vars_in_cols(df: pd.DataFrame, list_vars: list) -> bool:
+    def vars_in_cols(df: pd.DataFrame, list_vars: list, filename: str) -> None:
+        assert isinstance(df, pd.DataFrame) and isinstance(list_vars, list)
         for var in list_vars:
             if var not in df.columns:
-                return False
-        return True
-
+                raise VariableNotFoundError(f"Required variable {var} not found in file {filename}")
+    
     @staticmethod
-    def is_unique(s: pd.Series) -> bool:
-        return len(s.unique()) == len(s)
+    def is_unique(s: pd.Series, var_name: str, filename: str) -> None:
+        assert isinstance(s, pd.Series)
+        unique_values = []
+        duplicated_values = []
+        for value in s:
+            if value not in unique_values:
+                unique_values.append(value)
+            else:
+                duplicated_values.append(value)
+        if len(s.unique()) != len(unique_values):
+            raise AssertionError
+        elif len(duplicated_values) != 0:
+            raise DuplicateIdentifierError(f"Non-unique values {duplicated_values} for {var_name} in file {filename}")
     
     @staticmethod
     def get_array_counts(arr: np.ndarray) -> dict:
