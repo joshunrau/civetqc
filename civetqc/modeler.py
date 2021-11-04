@@ -39,10 +39,10 @@ class Modeler(Dataset):
         super().__init__(civet_csv, user_csv, cutoff_value)
         # self.logistic_regression = Model(LogisticRegression().fit(self.features.train, self.target.train))
         # self.knn = Model(KNeighborsClassifier(n_neighbors=6))
-
+    
     def __str__(self) -> str:
-        return super().__str__() + "test"
-
+        model_info = "\n".join([])
+        return super().__str__() + "\n" + model_info
 
 
 

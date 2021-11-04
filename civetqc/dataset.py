@@ -52,9 +52,10 @@ class Dataset:
     __eq__(self, other: object)
         Returns True if other is an object of self.__class__ and idvar,
         qcvar, and df are equal in both objects
-
+    
     __str__(self)
-        TBD
+        Returns the number of total observations and the target counts
+        for both the testing and training sets
     
     Instance Methods
     ----------------
@@ -70,7 +71,7 @@ class Dataset:
     is_unique(s: pd.Series, var_name: str, filename: str)
         raises a DuplicateIdentifierError if there are any non-unique values in s
     get_array_counts(arr: np.ndarray)
-        returns a dictionary with the number of occurrences of each value in arr
+        returns a string with the number of occurrences of each value in arr
 
     """
 
@@ -129,17 +130,12 @@ class Dataset:
         return self.idvar == other.idvar and self.qcvar == other.qcvar and self.df.equals(other.df)
     
     def __str__(self) -> str:
-        return (
-            "DATASET\n"
-            "----------------------------------------------------------------------\n"
-            "General Information:\n"
-            f"Number of Observations: {len(self.df)}\n"
-            "Target:\n"
-            f"Train (N={len(self.target.train)})\n"
-            f"{self.get_array_counts(self.target.train)}\n"
-            f"Test\n"
-            f"{self.get_array_counts(self.target.test)}\n"
-        )
+        dataset_header = "DATASET"
+        horizontal_line = "----------------------------------------------------------------------"
+        num_observ =  f"Number of Observations: {len(self.df)}"
+        target_train = f"Target Train:\n{self.get_array_counts(self.target.train)}"
+        target_test = f"Target Test:\n{self.get_array_counts(self.target.test)}"
+        return "\n".join([dataset_header, horizontal_line, num_observ, target_train, target_test])
 
     def all_in_range(self, var: str, r: int) -> bool:
         for value in self.df[var]:

@@ -138,3 +138,10 @@ dmypy.json
 data/LAM/
 data/UKBB/
 data/tests/
+
+# jupyter
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# ignore test notebooks
+tmp/
