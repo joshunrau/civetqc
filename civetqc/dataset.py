@@ -19,7 +19,7 @@ class DataPartition:
         assert isinstance(train, np.ndarray) and isinstance(test, np.ndarray)
         self.train, self.test = train, test
 
-
+    
 class Dataset:
     """ 
     Class used to import and organize data before modeling
@@ -63,6 +63,9 @@ class Dataset:
     all_in_range(self, var: str, r: int)
         returns whether all values in self.df[var] are in range(r)
 
+    format_class_counts(self, d: dict)
+        returns a formated string of the class counts in the test and training sets
+
     Static Methods
     --------------
 
@@ -71,7 +74,7 @@ class Dataset:
     is_unique(s: pd.Series, var_name: str, filename: str)
         raises a DuplicateIdentifierError if there are any non-unique values in s
     get_array_counts(arr: np.ndarray)
-        returns a string with the number of occurrences of each value in arr
+        returns a dict with the number of occurrences of each value in arr
 
     """
 
@@ -133,8 +136,8 @@ class Dataset:
         dataset_header = "DATASET"
         horizontal_line = "----------------------------------------------------------------------"
         num_observ =  f"Number of Observations: {len(self.df)}"
-        target_train = f"Target Train:\n{self.get_array_counts(self.target.train)}"
-        target_test = f"Target Test:\n{self.get_array_counts(self.target.test)}"
+        target_train = f"Target Train:\n{self.format_class_counts(self.get_array_counts(self.target.train))}"
+        target_test = f"Target Test:\n{self.format_class_counts(self.get_array_counts(self.target.test))}"
         return "\n".join([dataset_header, horizontal_line, num_observ, target_train, target_test])
 
     def all_in_range(self, var: str, r: int) -> bool:
@@ -143,6 +146,15 @@ class Dataset:
                 return False
         return True
     
+    def format_class_counts(self, d: dict) -> str:
+        list_strings = []
+        sum_classes = 0
+        for key in d:
+            sum_classes += d[key]
+        for key in d:
+            list_strings.append(f"{key}: {d[key]} ({round(d[key]/sum_classes*100, 1)}%)")
+        return "\n".join(list_strings)
+
     @staticmethod
     def vars_in_cols(df: pd.DataFrame, list_vars: list, filename: str) -> None:
         assert isinstance(df, pd.DataFrame) and isinstance(list_vars, list)
@@ -166,10 +178,10 @@ class Dataset:
             raise DuplicateIdentifierError(f"Non-unique values {duplicated_values} for {var_name} in file {filename}")
     
     @staticmethod
-    def get_array_counts(arr: np.ndarray) -> str:
+    def get_array_counts(arr: np.ndarray) -> dict:
         assert isinstance(arr, np.ndarray) and arr.ndim == 1
         counts_array = np.array(np.unique(arr, return_counts=True)).T
-        list_strings = []
+        counts = {}
         for i in range(len(counts_array)):
-            list_strings.append(f"{counts_array[i, 0]}: {counts_array[i, 1]}")
-        return "\n".join(list_strings)
+            counts[counts_array[i, 0]] = counts_array[i, 1]
+        return counts
