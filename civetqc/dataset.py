@@ -130,10 +130,10 @@ class Dataset:
     
     def __str__(self) -> str:
         return (
-            "Dataset Object\n"
+            "DATASET\n"
             "----------------------------------------------------------------------\n"
             "General Information:\n"
-            f"Number of Observations: {len(self.df)}\n\n"
+            f"Number of Observations: {len(self.df)}\n"
             "Target:\n"
             f"Train (N={len(self.target.train)})\n"
             f"{self.get_array_counts(self.target.train)}\n"
@@ -170,7 +170,7 @@ class Dataset:
             raise DuplicateIdentifierError(f"Non-unique values {duplicated_values} for {var_name} in file {filename}")
     
     @staticmethod
-    def get_array_counts(arr: np.ndarray) -> dict:
+    def get_array_counts(arr: np.ndarray) -> str:
         assert isinstance(arr, np.ndarray) and arr.ndim == 1
         counts_array = np.array(np.unique(arr, return_counts=True)).T
         list_strings = []
