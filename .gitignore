@@ -135,8 +135,7 @@ dmypy.json
 .idea/
 
 # Patient data
-data/LAM/
-data/UKBB/
+data/studies/
 data/tests/
 
 # jupyter
