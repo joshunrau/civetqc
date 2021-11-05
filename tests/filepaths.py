@@ -1,0 +1,7 @@
+CIVET_OUTPUT = "/Users/joshua/Developer/civetqc/data/LAM/civet_data.csv"
+USER_RATINGS = "/Users/joshua/Developer/civetqc/data/LAM/user_ratings.csv"
+TEST_DATA_DIR = "/Users/joshua/Developer/civetqc/data/tests"
+DOES_NOT_EXIST = "/Users/joshua/this_file_does_not_exist.csv"
+DUPLICATED_ID = "/Users/joshua/Developer/civetqc/data/tests/duplicated_id.csv"
+INVALID_QCVAR_NAME = "/Users/joshua/Developer/civetqc/data/tests/qc_lower.csv"
+INVALID_FILE_FORMAT = "/Users/joshua/Developer/civetqc/data/tests/invalid_format.txt"
