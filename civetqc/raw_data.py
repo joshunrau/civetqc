@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 
+
 class RawStudyData:
     """ class to prepare raw CIVET data into CSV file in case CSV is NA """
 
@@ -35,9 +36,9 @@ class RawStudyData:
                 raise ValueError("all values in dictionary are not equal!")
     
     def to_csv(self, path_out):
-        pd.DataFrame(self.civet_dict).to_csv(path_out)
+        pd.DataFrame(self.civet_dict).to_csv(path_out, index=False)
 
 
 if __name__ == "__main__":
-    rd = RawStudyData("/Users/joshua/Downloads")
+    rd = RawStudyData("/Users/joshua/Developer/civetqc/data/studies/TOPSY/raw")
     rd.to_csv("/Users/joshua/Developer/civetqc/data/studies/TOPSY/civet_TOPSY.csv")
