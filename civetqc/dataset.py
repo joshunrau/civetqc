@@ -1,8 +1,7 @@
 import os
-from typing import Type, Union
+from typing import Union
 import numpy as np
 import pandas as pd
-from scipy.sparse import data
 from sklearn.model_selection import train_test_split
 import warnings
 
@@ -52,7 +51,6 @@ class Dataset:
 
     Attributes
     ----------
-
     idvar : str
         Name of the ID variable which must be in imported csv files
     qcvar : str
@@ -74,7 +72,6 @@ class Dataset:
 
     Operators
     ---------
-
     __eq__(self, other: object)
         Returns True if other is an object of self.__class__ and idvar,
         qcvar, and df are equal in both objects
@@ -84,15 +81,11 @@ class Dataset:
 
     Instance Methods
     ----------------
-    
     all_in_range(self, var: str, r: int)
         Returns whether all values in self.df[var] are in range(r)
-    format_class_counts(self, d: dict)
-        Returns a formated string of the class counts in the test and training sets
 
     Class Methods
-    --------------
-
+    -------------
     master_dataset(cls, studies: list)
         Takes as arguments a list of tuples of the format (civet_csv, user_csv), using each 
         to create an object of type Dataset. Returns an object of type Dataset where the attribute
@@ -100,14 +93,14 @@ class Dataset:
 
     Static Methods
     --------------
-
+    format_class_counts(d: dict)
+        Returns a formatted string of the class counts in the test and training sets
     vars_in_cols(df: pd.DataFrame, list_vars: list, filename: str)
         Raises a VariableNotFoundError if all strings in list_vars are not in df.columns
     is_unique(s: pd.Series, var_name: str, filename: str)
         Raises a DuplicateIdentifierError if there are any non-unique values in s
     get_array_counts(arr: np.ndarray)
         Returns a dict with the number of occurrences of each value in arr
-    
     """
 
     idvar = "ID"
@@ -169,25 +162,16 @@ class Dataset:
     def __str__(self) -> str:
         dataset_header = "DATASET"
         horizontal_line = "----------------------------------------------------------------------"
-        num_observ =  f"Number of Observations: {len(self.df)}"
+        observations = f"Number of Observations: {len(self.df)}"
         target_train = f"Target Train:\n{self.format_class_counts(self.get_array_counts(self.target.train))}"
         target_test = f"Target Test:\n{self.format_class_counts(self.get_array_counts(self.target.test))}"
-        return "\n".join([dataset_header, horizontal_line, num_observ, target_train, target_test])
+        return "\n".join([dataset_header, horizontal_line, observations, target_train, target_test])
 
     def all_in_range(self, var: str, r: int) -> bool:
         for value in self.df[var]:
             if value not in range(r):
                 return False
         return True
-    
-    def format_class_counts(self, d: dict) -> str:
-        list_strings = []
-        sum_classes = 0
-        for key in d:
-            sum_classes += d[key]
-        for key in d:
-            list_strings.append(f"{key}: {d[key]} ({round(d[key]/sum_classes*100, 1)}%)")
-        return "\n".join(list_strings)
     
     @classmethod
     def master_dataset(cls, studies: list):
@@ -203,7 +187,7 @@ class Dataset:
                     studies[i] = None
                     break
                 elif not isinstance(studies[i][j], str):
-                    raise TypeError(f"All elements of tuples in list 'studies' must be of type 'str', not {type(studies[i][j])}")
+                    raise TypeError(f"All tuple elements in list 'studies' must be 'str', not {type(studies[i][j])}")
         
         dataset = cls(studies[0][0], studies[0][1])
         cls.vars_in_cols(dataset.df, cls.required_all_vars)
@@ -218,6 +202,16 @@ class Dataset:
         dataset.features = DataPartition(x_train, x_test)
         dataset.target = DataPartition(y_train, y_test)
         return dataset
+
+    @staticmethod
+    def format_class_counts(d: dict) -> str:
+        list_strings = []
+        sum_classes = 0
+        for key in d:
+            sum_classes += d[key]
+        for key in d:
+            list_strings.append(f"{key}: {d[key]} ({round(d[key]/sum_classes*100, 1)}%)")
+        return "\n".join(list_strings)
 
     @staticmethod
     def vars_in_cols(df: pd.DataFrame, list_vars: list, filename: Union[str, None] = None) -> None:
@@ -251,3 +245,38 @@ class Dataset:
         for i in range(len(counts_array)):
             counts[counts_array[i, 0]] = counts_array[i, 1]
         return counts
+
+
+def dict_values_equal(d: dict):
+    """ returns whether all values in dict are of equal length """
+    req_len = len(list(d.values())[0])
+    for key in d:
+        if len(d[key]) != req_len:
+            return False
+    return True
+
+
+def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
+    """ given a directory containing civet txt outputs, creates a single csv file """
+    # Get list of patient files in directory
+    patient_files = {}
+    for filename in os.listdir(dir_name):
+        if "civet_qc" in filename:
+            patient_files[filename.split("_")[0]] = filename
+
+    # Open each file and append data to dictionary
+    civet_dict = {"ID": []}
+    for patient_id in patient_files:
+        civet_dict["ID"].append(patient_id)
+        with open(os.path.join(dir_name, patient_files[patient_id]), 'r') as f:
+            for line in f:
+                var, value = line.split("=")
+                try:
+                    civet_dict[var].append(value.strip("\n"))
+                except KeyError:
+                    civet_dict[var] = [value.strip("\n")]
+
+    # Verify length of all values are equal and write to csv
+    if not dict_values_equal(civet_dict):
+        raise ValueError("all values in dictionary are not equal!")
+    pd.DataFrame(civet_dict).to_csv(output_dir, index=False)
