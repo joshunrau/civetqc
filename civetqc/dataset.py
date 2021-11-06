@@ -2,7 +2,6 @@ import os
 from typing import Union
 import numpy as np
 import pandas as pd
-from scipy.sparse import data
 from sklearn.model_selection import train_test_split
 
 
@@ -14,6 +13,7 @@ CIVET_FILE_PATHS = {
     "LAM": os.path.join(STUDIES_DIR, "LAM", "LAM_civet_data.csv"),
     "TOPSY": os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_civet_data.csv")
 }
+
 
 QC_FILE_PATHS = {
     "FEP": os.path.join(STUDIES_DIR, "FEP", "FEP_QC.csv"),
@@ -201,18 +201,19 @@ class Dataset(StudyData):
 
     get_array_counts(arr: np.ndarray)
         returns a dict with the number of occurrences of each value in arr
-
+    
     """
     def __init__(self, *args) -> None:
         """ takes objects of type StudyData as args """
         assert all([isinstance(x, StudyData) for x in args])
         self.df = args[0].df
+        self.vars_in_cols(self.df, self.required_all_vars)
         for dataset in args[1:]:
             self.vars_in_cols(dataset.df, self.required_all_vars)
-            self.df.merge(dataset.df, on=self.required_all_vars)
+            self.df = pd.concat([self.df, dataset.df])
         features_array = self.df[self.civet_feature_names].to_numpy()
         target_array = self.df[self.qcvar].to_numpy()
-        x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=0)
+        x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=1)
         self.features = DataPartition(x_train, x_test)
         self.target = DataPartition(y_train, y_test)
     
@@ -246,8 +247,11 @@ class Dataset(StudyData):
 def main():
     fep_dataset = StudyData(CIVET_FILE_PATHS["FEP"], QC_FILE_PATHS["FEP"])
     lam_dataset = StudyData(CIVET_FILE_PATHS["LAM"], QC_FILE_PATHS["LAM"])
+    print(Dataset(fep_dataset))
+    print(Dataset(lam_dataset))
     dataset = Dataset(fep_dataset, lam_dataset)
     print(dataset)
+
 
 
 if __name__ == "__main__":
