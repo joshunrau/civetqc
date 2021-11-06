@@ -1,4 +1,4 @@
-from civetqc.dataset import Dataset, StudyData, VariableNotFoundError, DuplicateIdentifierError, CIVET_FILE_PATHS, QC_FILE_PATHS
+from civetqc.dataset import Dataset, VariableNotFoundError, DuplicateIdentifierError, CIVET_FILE_PATHS, QC_FILE_PATHS
 from copy import deepcopy
 from numpy import NaN
 import pandas as pd
@@ -12,16 +12,16 @@ INVALID_QCVAR_NAME = "/Users/joshua/Developer/civetqc/data/tests/qc_lower.csv"
 INVALID_FILE_FORMAT = "/Users/joshua/Developer/civetqc/data/tests/invalid_format.txt"
 
 
-class TestStudyData(unittest.TestCase):
+class TestDataset(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.sd = StudyData(CIVET_FILE_PATHS["LAM"], QC_FILE_PATHS["LAM"], 1)
+        self.sd = Dataset(CIVET_FILE_PATHS["LAM"], QC_FILE_PATHS["LAM"], 1)
 
     def test_init(self):
         self.assertEqual(self.sd.df.shape, (333, 31))
-        self.assertRaises(FileNotFoundError, StudyData, DOES_NOT_EXIST, QC_FILE_PATHS["LAM"])
-        self.assertRaises(DuplicateIdentifierError, StudyData, DUPLICATED_ID, QC_FILE_PATHS["LAM"])
-        self.assertRaises(VariableNotFoundError, StudyData, CIVET_FILE_PATHS["LAM"], INVALID_QCVAR_NAME)
+        self.assertRaises(FileNotFoundError, Dataset, DOES_NOT_EXIST, QC_FILE_PATHS["LAM"])
+        self.assertRaises(DuplicateIdentifierError, Dataset, DUPLICATED_ID, QC_FILE_PATHS["LAM"])
+        self.assertRaises(VariableNotFoundError, Dataset, CIVET_FILE_PATHS["LAM"], INVALID_QCVAR_NAME)
 
     def test_equality_operator(self):
         test_df = pd.DataFrame({"x": [1, 2, 3]})
