@@ -15,11 +15,7 @@ install:
 	pip install -r requirements.txt
 	pip install .
 
-st:
-	@if [ $${CONDA_PREFIX:(-7):7} != civetqc ]; then echo ERROR: must install in civetqc environment && exit 1; fi
-	./bin/shell_test
-
 test:
 	python -m unittest discover tests
 
-clean-install: clean install
+clean-install: install clean
