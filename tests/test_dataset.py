@@ -7,6 +7,7 @@ import unittest
 
 
 class SimulatedDataset(dataset.Dataset):
+    
     simulated_data_dir = "/Users/joshua/Developer/civetqc/data/simulated"
 
     def __init__(self, id_range: tuple, qc_range: tuple, seed: int):
@@ -112,3 +113,13 @@ class TestDataset(unittest.TestCase):
         self.assertNotEqual(self.datasets[1], dataset_copy)
         dataset_copy.df = self.datasets[1].df
         self.assertEqual(self.datasets[1], dataset_copy)
+    
+    def test_master_dataset(self):
+        fpaths = {str(study): (self.filepaths[study]["CIVET"], self.filepaths[study]["QC"]) for study in self.filepaths}
+        master_dataset = dataset.Dataset.master_dataset(fpaths)
+        self.assertTrue(master_dataset.df.shape == (100, 31))
+        self.assertTrue(master_dataset.df.drop_duplicates().shape == (100, 31))
+        self.assertTrue(master_dataset.features.train.shape == (75, 29))
+        self.assertTrue(master_dataset.features.test.shape == (25, 29))
+        self.assertTrue(master_dataset.target.train.shape == (75,))
+        self.assertTrue(master_dataset.target.test.shape == (25,))

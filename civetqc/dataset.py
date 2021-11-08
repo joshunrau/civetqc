@@ -3,23 +3,15 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-import warnings
 
 
 STUDIES_DIR = "/Users/joshua/Developer/civetqc/data/studies"
 
 
-CIVET_FILE_PATHS = {
-    "FEP": os.path.join(STUDIES_DIR, "FEP", "FEP_civet_data.csv"),
-    "LAM": os.path.join(STUDIES_DIR, "LAM", "LAM_civet_data.csv"),
-    "TOPSY": os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_civet_data.csv")
-}
-
-
-QC_FILE_PATHS = {
-    "FEP": os.path.join(STUDIES_DIR, "FEP", "FEP_QC.csv"),
-    "LAM": os.path.join(STUDIES_DIR, "LAM", "LAM_QC.csv"),
-    "TOPSY": None
+FILEPATHS = {
+    "FEP": (os.path.join(STUDIES_DIR, "FEP", "FEP_civet_data.csv"), os.path.join(STUDIES_DIR, "FEP", "FEP_QC.csv")),
+    "LAM": (os.path.join(STUDIES_DIR, "LAM", "LAM_civet_data.csv"), os.path.join(STUDIES_DIR, "LAM", "LAM_QC.csv")),
+    "TOPSY": (os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_civet_data.csv"), None)
 }
 
 
@@ -91,8 +83,8 @@ class Dataset:
 
     Class Methods
     -------------
-    master_dataset(cls, studies: list)
-        Takes as arguments a list of tuples of the format (civet_csv, user_csv), using each 
+    master_dataset(cls, filepaths: dict)
+        Takes as arguments a dict of tuples of the format (civet_csv, user_csv), using each 
         to create an object of type Dataset. Returns an object of type Dataset where the attribute
         df, features, and target for the instance are merged from the aforementioned Datasets.
 
@@ -179,35 +171,31 @@ class Dataset:
         return True
     
     @classmethod
-    def master_dataset(cls, studies: list):
-
-        if not isinstance(studies, list):
-            raise TypeError(f"Expected argument of type 'list' but received {type(studies)}")
-        for i in range(len(studies)):
-            if not isinstance(studies[i], tuple):
-                raise TypeError(f"All elements in 'studies' must be of type 'tuple', not {type(studies[i])}")
-            for j in range(len(studies[i])):
-                if studies[i][j] is None:
-                    warnings.warn("Missing value in paths to CSV to input")
-                    studies[i] = None
-                    break
-                elif not isinstance(studies[i][j], str):
-                    raise TypeError(f"All tuple elements in list 'studies' must be 'str', not {type(studies[i][j])}")
-        
-        dataset = cls(studies[0][0], studies[0][1])
-        cls.vars_in_cols(dataset.df, cls.required_all_vars)
-        for civ, qc in studies[1:]:
-            dataset_tmp = Dataset(civ, qc)
-            cls.vars_in_cols(dataset_tmp.df, cls.required_all_vars)
-            dataset.df = pd.concat([dataset.df, dataset_tmp.df])
-        
+    def master_dataset(cls, filepaths: dict):
+        if not isinstance(filepaths, dict):
+            raise TypeError(f"Expected argument of {dict} but received {type(filepaths)}")
+        for key in filepaths:
+            if not isinstance(filepaths[key], tuple):
+                raise TypeError(f"Expected argument of {tuple} but received {type(filepaths[key])}")
+            if len(filepaths[key]) != 2:
+                raise ValueError(f"Tuples in filepaths dict must be len 2, not len {len(filepaths[key])}")
+            for fpath in filepaths[key]:
+                if not isinstance(fpath, str):
+                    raise TypeError(f"Expected argument of {str} but received {type(fpath)}")
+                if not os.path.isfile(fpath):
+                    raise FileNotFoundError(f"File at path {fpath} does not exist")
+            try:
+                dataset_tmp = cls(filepaths[key][0], filepaths[key][1])
+                dataset.df = pd.concat([dataset.df, dataset_tmp.df])
+            except NameError:
+                dataset = cls(filepaths[key][0], filepaths[key][1])
         features_array = dataset.df[dataset.civet_feature_names].to_numpy()
         target_array = dataset.df[dataset.qcvar].to_numpy()
         x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=1)
         dataset.features = DataPartition(x_train, x_test)
         dataset.target = DataPartition(y_train, y_test)
         return dataset
-
+    
     @staticmethod
     def format_class_counts(d: dict) -> str:
         list_strings = []
@@ -263,6 +251,7 @@ def dict_values_equal(d: dict):
 
 def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
     """ given a directory containing civet txt outputs, creates a single csv file """
+    
     # Get list of patient files in directory
     patient_files = {}
     for filename in os.listdir(dir_name):
