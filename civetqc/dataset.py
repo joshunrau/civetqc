@@ -33,6 +33,11 @@ class DuplicateIdentifierError(Exception):
     pass
 
 
+class NegativeQCRatingError(ValueError):
+    """ raised when negative QC value is in CSV file """
+    pass
+
+
 class DataPartition:
     """ container for test and training partitions of target or features """
     def __init__(self, train: np.ndarray, test: np.ndarray) -> None:
@@ -137,13 +142,13 @@ class Dataset:
 
         self.is_unique(civet_data[self.idvar], self.idvar, civet_csv)
         self.is_unique(user_ratings[self.idvar], self.idvar, user_csv)
-    
+
         self.df = pd.merge(civet_data, user_ratings, on=self.idvar).dropna()
         self.df = self.df[[self.idvar, self.qcvar] + self.civet_feature_names]
         self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
 
         if not all(self.df[self.qcvar] >= 0):
-            raise ValueError("Negative values are not permitted for QC ratings")
+            raise NegativeQCRatingError
         
         self.df[self.qcvar] = np.where(self.df[self.qcvar] < cutoff_value, 0, 1)
         assert self.all_in_range(self.qcvar, 2)
