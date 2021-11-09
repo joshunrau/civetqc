@@ -2,6 +2,7 @@ import os
 from typing import Union
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 
 class VariableNotFoundError(Exception):
@@ -136,6 +137,14 @@ class StudyData:
                 raise VariableNotFoundError(f"Required variable {var} not found in file {filename}")
 
 
+class DataPartition:
+    """ container for test and training sets """
+    def __init__(self, features: np.ndarray, target: np.ndarray) -> None:
+        assert isinstance(features, np.ndarray) and isinstance(target, np.ndarray)
+        assert features.ndim == 2 and target.ndim == 1
+        self.features, self.target = features, target
+
+
 class Dataset(StudyData):
     """
     This class contains merged data from several studies.
@@ -150,7 +159,14 @@ class Dataset(StudyData):
         Paths to the CSV files for each study that will be imported
     df: pd.DataFrame
         Dataframe containing merged data from all studies
-
+    features: np.ndarray
+        2D array of features
+    target: np.ndarray
+        1D array of targets
+    train: DataPartition
+        Training set
+    test: DataPartition
+        Testing set
     """
 
     studies_dir = "/Users/joshua/Developer/civetqc/data/studies"
@@ -174,12 +190,16 @@ class Dataset(StudyData):
         )
     }
 
-    def __init__(self, cutoff_value: int = 1) -> None:
+    def __init__(self, cutoff_value: int = 1, balanced: bool = False, list_features: Union[None, list] = None)  -> None:
         """
         Parameters
         ----------
         cutoff_value: int
             the cutoff value for a valid scan
+        balanced: bool
+            specify whether target classes should be balanced
+        list_features: None/list
+            list of features to include (if None, will include all)
         """
 
         self.df = None
@@ -193,5 +213,21 @@ class Dataset(StudyData):
         assert self.df[self.idvar].is_unique
         assert self.all_in_range(self.qcvar, cutoff_value + 1)
         self.vars_in_cols(self.df, self.required_all_vars)
-
         self.df[self.idvar] = list(range(1, len(self.df[self.idvar]) + 1))
+
+        if balanced:
+            min_cls = self.df[self.qcvar].value_counts().min()
+            self.df = self.df.groupby(self.qcvar).sample(n=min_cls).sort_values(by=self.idvar)
+        
+        if list_features is not None:
+            self.vars_in_cols(self.df, list_features)
+            self.feature_names = list_features
+            self.required_all_vars = [self.idvar, self.qcvar] + self.feature_names
+            self.df = self.df[self.required_all_vars]
+
+        self.features = self.df[self.feature_names].to_numpy()
+        self.target = self.df[self.qcvar].to_numpy()
+
+        X_train, X_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
+        self.train = DataPartition(X_train, y_train)
+        self.test = DataPartition(X_test, y_test)
