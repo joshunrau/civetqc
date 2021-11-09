@@ -272,3 +272,8 @@ class MasterDataset(Dataset):
         x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=1)
         self.features = DataPartition(x_train, x_test)
         self.target = DataPartition(y_train, y_test)
+
+        assert self.df[self.idvar].is_unique
+        self.df[self.idvar] = list(range(1, len(self.df[self.idvar]) + 1))
+
+
