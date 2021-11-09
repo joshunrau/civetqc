@@ -3,7 +3,6 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-import warnings
 
 """
 
@@ -11,9 +10,6 @@ TO DO:
     Manage floating point values for QC ratings
     iRELATE: still waiting on whether QC was done
     NUSDAST: extract CIVET outputs from /data/lepage/NUSDAST/data/processed/civet2.1.0_bpipe_Niagara
-
-    tar -xzvf /data/lepage/NUSDAST/data/processed/civet2.1.0_bpipe_Niagara/NUSDASTcivet.tar.gz /home/cic/unrjos
-
     
 """
 
@@ -36,11 +32,7 @@ FILEPATHS = {
     "TOPSY": (
         os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_civet_data.csv"), 
         os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_QC.csv")
-        ),
-    "NUSDAST": (
-        None,
-        os.path.join(STUDIES_DIR, "NUSDAST", "NUSDAST_QC.csv")
-    )
+        )
 }
 
 
@@ -58,10 +50,15 @@ class InvalidCutoffError(ValueError):
     """ raised when cutoff value below one is provided """
     pass
 
+
 class NegativeQCRatingError(ValueError):
     """ raised when negative QC value is in CSV file """
     pass
 
+
+class DataFrameMergerError(ValueError):
+    """ raised when cannot merge dataframes on key var due to type """
+    pass
 
 
 class DataPartition:
@@ -162,7 +159,11 @@ class Dataset:
         self.is_unique(civet_data[self.idvar], self.idvar, civet_csv)
         self.is_unique(user_ratings[self.idvar], self.idvar, user_csv)
 
-        self.df = pd.merge(civet_data, user_ratings, on=self.idvar).dropna()
+        try:
+            self.df = pd.merge(civet_data, user_ratings, on=self.idvar).dropna()
+        except ValueError as err:
+            raise DataFrameMergerError(f"Error merging dataframes from files '{civet_csv}' and '{user_csv}, {err}")
+        
         self.df = self.df[[self.idvar, self.qcvar] + self.civet_feature_names]
         self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
 
@@ -247,7 +248,7 @@ class Dataset:
 class MasterDataset(Dataset):
 
     def __init__(self, filepaths: dict = FILEPATHS, cutoff_value: int = 1) -> None:
-        
+
         if not isinstance(filepaths, dict):
             raise TypeError(f"Expected argument of {dict} but received {type(filepaths)}")
         for key in filepaths:
@@ -255,9 +256,6 @@ class MasterDataset(Dataset):
                 raise TypeError(f"Expected argument of {tuple} but received {type(filepaths[key])}")
             if len(filepaths[key]) != 2:
                 raise ValueError(f"Tuples in filepaths dict must be len 2, not len {len(filepaths[key])}")
-            if any([x for x in filepaths[key] if x is None]):
-                warnings.warn(f"Missing filepath for {key}, skipping study...")
-                continue
             for fpath in filepaths[key]:
                 if not isinstance(fpath, str):
                     raise TypeError(f"Expected argument of {str} but received {type(fpath)}")

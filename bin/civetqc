@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# civetqc txt2csv /Users/joshua/Developer/civetqc/data/studies/TOPSY/raw /Users/joshua
+# civetqc txt2csv /Users/joshua/Developer/civetqc/data/studies/TOPSY/raw /Users/joshua/Developer/civetqc/data/studies/TOPSY
 
 import argparse
 import civetqc.txt_to_csv as txt_to_csv 

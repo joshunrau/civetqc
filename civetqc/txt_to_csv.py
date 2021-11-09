@@ -39,7 +39,8 @@ def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
     # Verify length of all values are equal and write to csv
     if not dict_values_equal(civet_dict):
         raise ValueError("all values in dictionary are not equal!")
-    pd.DataFrame(civet_dict).to_csv(outfile, index=False)
+    df = pd.DataFrame(civet_dict).sort_values(by="ID")
+    df.to_csv(outfile, index=False)
 
 
 def parse_args(args: argparse.Namespace) -> None:
