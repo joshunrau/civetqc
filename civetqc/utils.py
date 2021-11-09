@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Union
 
 
-def dict_values_equal(d: dict):
+def dict_values_equal(d: dict) -> bool:
     """ returns whether all values in dict are of equal length """
     req_len = len(list(d.values())[0])
     for key in d:
@@ -43,5 +43,5 @@ def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
     df.to_csv(outfile, index=False)
 
 
-def parse_args(args: argparse.Namespace) -> None:
+def txt2csv_parse_args(args: argparse.Namespace) -> None:
     txt_to_csv(args.input, args.output)

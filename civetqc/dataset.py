@@ -4,30 +4,6 @@ import numpy as np
 import pandas as pd
 
 
-STUDIES_DIR = "/Users/joshua/Developer/civetqc/data/studies"
-OUTPUT_FILE = os.path.join(STUDIES_DIR, "master_dataset.csv")
-
-
-STUDY_FILEPATHS = {
-    "FEP": (
-        os.path.join(STUDIES_DIR, "FEP", "FEP_civet_data.csv"), 
-        os.path.join(STUDIES_DIR, "FEP", "FEP_QC.csv")
-        ),
-    "LAM": (
-        os.path.join(STUDIES_DIR, "LAM", "LAM_civet_data.csv"), 
-        os.path.join(STUDIES_DIR, "LAM", "LAM_QC.csv")
-        ),
-    "INSIGHT": (
-        os.path.join(STUDIES_DIR, "INSIGHT", "INSIGHT_civet_data.csv"), 
-        os.path.join(STUDIES_DIR, "INSIGHT", "INSIGHT_QC.csv")
-        ),
-    "TOPSY": (
-        os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_civet_data.csv"), 
-        os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_QC.csv")
-        )
-}
-
-
 class VariableNotFoundError(Exception):
     """ raised when a required variable is not found in CSV file """
     pass
@@ -53,7 +29,7 @@ class DataFrameMergerError(ValueError):
     pass
 
 
-class Dataset:
+class StudyData:
     """ 
     This class contains data from one CIVET output and one QC ratings file.
     
@@ -65,7 +41,11 @@ class Dataset:
         Name of the ID variable which must be in imported csv files
     qcvar : str
         Name of the column containing user QC ratings
-    civet_feature_names : list
+    civet_data: pd.DataFrame
+        Dataframe created from CSV file outputted by CIVET
+    qc_data: str
+        Dataframe created from QC ratings associated with a study
+    feature_names : list
         List of the names of the features outputted by CIVET
     required_civet_vars : list
         List of variable names required to be in the CIVET output file
@@ -76,21 +56,18 @@ class Dataset:
     df : pd.DataFrame
         Merged dataframe created from CIVET output and user ratings
 
-    Instance Methods
+    Methods
     ----------------
     all_in_range(self, var: str, r: int)
         Returns whether all values in self.df[var] are in range(r)
-    
-    Static Methods
-    --------------
     vars_in_cols(df: pd.DataFrame, list_vars: list, filename: str)
         Raises a VariableNotFoundError if all strings in list_vars are not in df.columns
-    
+
     """
 
     idvar = "ID"
     qcvar = "QC"
-    civet_feature_names = [
+    feature_names = [
         "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT",
         "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL",
         "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA",
@@ -98,9 +75,9 @@ class Dataset:
         "LEFT_INTER", "RIGHT_INTER", "LEFT_SURF_SURF", "RIGHT_SURF_SURF", "LAPLACIAN_MIN",
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
     ]
-    required_civet_vars = [idvar] + civet_feature_names
+    required_civet_vars = [idvar] + feature_names
     required_user_vars = [idvar, qcvar]
-    required_all_vars = [idvar, qcvar] + civet_feature_names
+    required_all_vars = [idvar, qcvar] + feature_names
 
     def __init__(self, civet_csv: str, qc_csv: str, cutoff_value: int = 1) -> None:
         """
@@ -121,9 +98,9 @@ class Dataset:
         self.vars_in_cols(self.qc_data, self.required_user_vars, qc_csv)
 
         # Check that all values for ID variable are unique
-        if not self.civet_data[self.idvar].unique():
+        if not len(self.civet_data[self.idvar].unique()) == len(self.civet_data[self.idvar]):
             raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {civet_csv}")
-        if not self.qc_data[self.idvar].unique():
+        if not len(self.qc_data[self.idvar].unique()) == len(self.qc_data[self.idvar]):
             raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {qc_csv}")
 
         # ValueError may be raised if the data types are different
@@ -132,17 +109,16 @@ class Dataset:
         except ValueError as err:
             raise DataFrameMergerError(f"Error merging dataframes from files '{civet_csv}' and '{qc_csv}, {err}")
         
-        self.df = self.df[[self.idvar, self.qcvar] + self.civet_feature_names]
+        self.df = self.df[[self.idvar, self.qcvar] + self.feature_names]
         self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
 
         if not all(self.df[self.qcvar] >= 0):
             raise NegativeQCRatingError
-        
         if cutoff_value < 1:
             raise InvalidCutoffError
         
         self.df[self.qcvar] = np.where(self.df[self.qcvar] < cutoff_value, 0, 1)
-        assert self.all_in_range(self.qcvar, 2)
+        assert self.all_in_range(self.qcvar, cutoff_value + 1)
 
     def all_in_range(self, var: str, r: int) -> bool:
         for value in self.df[var]:
@@ -160,33 +136,62 @@ class Dataset:
                 raise VariableNotFoundError(f"Required variable {var} not found in file {filename}")
 
 
-class MasterDataset(Dataset):
+class Dataset(StudyData):
+    """
+    This class contains merged data from several studies.
 
-    def __init__(self, filepaths: dict, cutoff_value: int) -> None:
-        if not isinstance(filepaths, dict):
-            raise TypeError(f"Expected argument of {dict} but received {type(filepaths)}")
-        for key in filepaths:
-            if not isinstance(filepaths[key], tuple):
-                raise TypeError(f"Expected argument of {tuple} but received {type(filepaths[key])}")
-            if len(filepaths[key]) != 2:
-                raise ValueError(f"Tuples in filepaths dict must be len 2, not len {len(filepaths[key])}")
-            for fpath in filepaths[key]:
-                if not isinstance(fpath, str):
-                    raise TypeError(f"Expected argument of {str} but received {type(fpath)}")
-                if not os.path.isfile(fpath):
-                    raise FileNotFoundError(f"File at path {fpath} does not exist")
-            try:
-                dataset_tmp = Dataset(filepaths[key][0], filepaths[key][1], cutoff_value)
-                self.df = pd.concat([self.df, dataset_tmp.df])
-            except AttributeError:
-                super().__init__(filepaths[key][0], filepaths[key][1], cutoff_value)
+    ...
+
+    Attributes
+    ----------
+    studies_dir: str
+        Path to directory with subdirectories for all studies
+    study_filepaths: dict
+        Paths to the CSV files for each study that will be imported
+    df: pd.DataFrame
+        Dataframe containing merged data from all studies
+
+    """
+
+    studies_dir = "/Users/joshua/Developer/civetqc/data/studies"
+
+    study_filepaths = {
+        "FEP": (
+            os.path.join(studies_dir, "FEP", "FEP_civet_data.csv"),
+            os.path.join(studies_dir, "FEP", "FEP_QC.csv")
+        ),
+        "LAM": (
+            os.path.join(studies_dir, "LAM", "LAM_civet_data.csv"),
+            os.path.join(studies_dir, "LAM", "LAM_QC.csv")
+        ),
+        "INSIGHT": (
+            os.path.join(studies_dir, "INSIGHT", "INSIGHT_civet_data.csv"),
+            os.path.join(studies_dir, "INSIGHT", "INSIGHT_QC.csv")
+        ),
+        "TOPSY": (
+            os.path.join(studies_dir, "TOPSY", "TOPSY_civet_data.csv"),
+            os.path.join(studies_dir, "TOPSY", "TOPSY_QC.csv")
+        )
+    }
+
+    def __init__(self, cutoff_value: int = 1) -> None:
+        """
+        Parameters
+        ----------
+        cutoff_value: int
+            the cutoff value for a valid scan
+        """
+
+        self.df = None
+        for key in self.study_filepaths:
+            if self.df is None:
+                super().__init__(self.study_filepaths[key][0], self.study_filepaths[key][1], cutoff_value)
+            else:
+                study_data = StudyData(self.study_filepaths[key][0], self.study_filepaths[key][1])
+                self.df = pd.concat([self.df, study_data.df])
+
         assert self.df[self.idvar].is_unique
+        assert self.all_in_range(self.qcvar, cutoff_value + 1)
+        self.vars_in_cols(self.df, self.required_all_vars)
+
         self.df[self.idvar] = list(range(1, len(self.df[self.idvar]) + 1))
-    
-    def save_df(self, output_path):
-        self.df.to_csv(output_path, index=False)
-
-
-def main():
-    master_dataset = MasterDataset(filepaths = STUDY_FILEPATHS, cutoff_value=1)
-    master_dataset.save_df(os.path.join(STUDIES_DIR, "master_dataset.csv"))
