@@ -3,15 +3,44 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import warnings
 
+"""
+
+TO DO:
+    Manage floating point values for QC ratings
+    iRELATE: still waiting on whether QC was done
+    NUSDAST: extract CIVET outputs from /data/lepage/NUSDAST/data/processed/civet2.1.0_bpipe_Niagara
+
+    tar -xzvf /data/lepage/NUSDAST/data/processed/civet2.1.0_bpipe_Niagara/NUSDASTcivet.tar.gz /home/cic/unrjos
+
+    
+"""
 
 STUDIES_DIR = "/Users/joshua/Developer/civetqc/data/studies"
 
 
 FILEPATHS = {
-    "FEP": (os.path.join(STUDIES_DIR, "FEP", "FEP_civet_data.csv"), os.path.join(STUDIES_DIR, "FEP", "FEP_QC.csv")),
-    "LAM": (os.path.join(STUDIES_DIR, "LAM", "LAM_civet_data.csv"), os.path.join(STUDIES_DIR, "LAM", "LAM_QC.csv")),
-    "TOPSY": (os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_civet_data.csv"), None)
+    "FEP": (
+        os.path.join(STUDIES_DIR, "FEP", "FEP_civet_data.csv"), 
+        os.path.join(STUDIES_DIR, "FEP", "FEP_QC.csv")
+        ),
+    "LAM": (
+        os.path.join(STUDIES_DIR, "LAM", "LAM_civet_data.csv"), 
+        os.path.join(STUDIES_DIR, "LAM", "LAM_QC.csv")
+        ),
+    "INSIGHT": (
+        os.path.join(STUDIES_DIR, "INSIGHT", "INSIGHT_civet_data.csv"), 
+        os.path.join(STUDIES_DIR, "INSIGHT", "INSIGHT_QC.csv")
+        ),
+    "TOPSY": (
+        os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_civet_data.csv"), 
+        os.path.join(STUDIES_DIR, "TOPSY", "TOPSY_QC.csv")
+        ),
+    "NUSDAST": (
+        None,
+        os.path.join(STUDIES_DIR, "NUSDAST", "NUSDAST_QC.csv")
+    )
 }
 
 
@@ -80,13 +109,6 @@ class Dataset:
     ----------------
     all_in_range(self, var: str, r: int)
         Returns whether all values in self.df[var] are in range(r)
-
-    Class Methods
-    -------------
-    master_dataset(cls, filepaths: dict)
-        Takes as arguments a dict of tuples of the format (civet_csv, user_csv), using each 
-        to create an object of type Dataset. Returns an object of type Dataset where the attribute
-        df, features, and target for the instance are merged from the aforementioned Datasets.
 
     Static Methods
     --------------
@@ -170,32 +192,6 @@ class Dataset:
                 return False
         return True
     
-    @classmethod
-    def master_dataset(cls, filepaths: dict):
-        if not isinstance(filepaths, dict):
-            raise TypeError(f"Expected argument of {dict} but received {type(filepaths)}")
-        for key in filepaths:
-            if not isinstance(filepaths[key], tuple):
-                raise TypeError(f"Expected argument of {tuple} but received {type(filepaths[key])}")
-            if len(filepaths[key]) != 2:
-                raise ValueError(f"Tuples in filepaths dict must be len 2, not len {len(filepaths[key])}")
-            for fpath in filepaths[key]:
-                if not isinstance(fpath, str):
-                    raise TypeError(f"Expected argument of {str} but received {type(fpath)}")
-                if not os.path.isfile(fpath):
-                    raise FileNotFoundError(f"File at path {fpath} does not exist")
-            try:
-                dataset_tmp = cls(filepaths[key][0], filepaths[key][1])
-                dataset.df = pd.concat([dataset.df, dataset_tmp.df])
-            except NameError:
-                dataset = cls(filepaths[key][0], filepaths[key][1])
-        features_array = dataset.df[dataset.civet_feature_names].to_numpy()
-        target_array = dataset.df[dataset.qcvar].to_numpy()
-        x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=1)
-        dataset.features = DataPartition(x_train, x_test)
-        dataset.target = DataPartition(y_train, y_test)
-        return dataset
-    
     @staticmethod
     def format_class_counts(d: dict) -> str:
         list_strings = []
@@ -238,6 +234,38 @@ class Dataset:
         for i in range(len(counts_array)):
             counts[counts_array[i, 0]] = counts_array[i, 1]
         return counts
+
+
+class MasterDataset(Dataset):
+
+    def __init__(self, filepaths: dict = FILEPATHS, cutoff_value: int = 1) -> None:
+        
+        if not isinstance(filepaths, dict):
+            raise TypeError(f"Expected argument of {dict} but received {type(filepaths)}")
+        for key in filepaths:
+            if not isinstance(filepaths[key], tuple):
+                raise TypeError(f"Expected argument of {tuple} but received {type(filepaths[key])}")
+            if len(filepaths[key]) != 2:
+                raise ValueError(f"Tuples in filepaths dict must be len 2, not len {len(filepaths[key])}")
+            if any([x for x in filepaths[key] if x is None]):
+                warnings.warn(f"Missing filepath for {key}, skipping study...")
+                continue
+            for fpath in filepaths[key]:
+                if not isinstance(fpath, str):
+                    raise TypeError(f"Expected argument of {str} but received {type(fpath)}")
+                if not os.path.isfile(fpath):
+                    raise FileNotFoundError(f"File at path {fpath} does not exist")
+            try:
+                dataset_tmp = Dataset(filepaths[key][0], filepaths[key][1], cutoff_value)
+                self.df = pd.concat([self.df, dataset_tmp.df])
+            except AttributeError:
+                super().__init__(filepaths[key][0], filepaths[key][1], cutoff_value)
+        
+        features_array = self.df[self.civet_feature_names].to_numpy()
+        target_array = self.df[self.qcvar].to_numpy()
+        x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=1)
+        self.features = DataPartition(x_train, x_test)
+        self.target = DataPartition(y_train, y_test)
 
 
 def dict_values_equal(d: dict):

@@ -116,7 +116,7 @@ class TestDataset(unittest.TestCase):
     
     def test_master_dataset(self):
         fpaths = {str(study): (self.filepaths[study]["CIVET"], self.filepaths[study]["QC"]) for study in self.filepaths}
-        master_dataset = dataset.Dataset.master_dataset(fpaths)
+        master_dataset = dataset.MasterDataset(fpaths)
         self.assertTrue(master_dataset.df.shape == (100, 31))
         self.assertTrue(master_dataset.df.drop_duplicates().shape == (100, 31))
         self.assertTrue(master_dataset.features.train.shape == (75, 29))
