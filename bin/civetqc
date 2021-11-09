@@ -1,23 +1,25 @@
 #!/usr/bin/env python
+# civetqc txt2csv /Users/joshua/Developer/civetqc/data/studies/TOPSY/raw /Users/joshua
 
-from civetqc.arguments import Arguments
-from civetqc.modeler import Modeler
+import argparse
+import civetqc.txt_to_csv as txt_to_csv 
 import sys
 
 
-def main() -> None:
-    
-    cmd = Arguments(sys.argv[1:])
+def main():
 
-    if cmd.args.verbose:
-        vprint = print
-        vprint("Using verbose output...")
-    else:
-        vprint = lambda *a, **k: None
+    parser = argparse.ArgumentParser(prog="civetqc")
+    subparsers = parser.add_subparsers(title='subcommands', description='valid subcommands', help='additional help')
+
+    # create the parser for the 'txt_to_csv' command
+    txt2csv = subparsers.add_parser("txt2csv", help="convert CIVET QC outputs from txt to csv")
+    txt2csv.add_argument("input", help="path to directory containing txt files")
+    txt2csv.add_argument("output", help="path to directory where csv should be outputted")
+    txt2csv.set_defaults(func=txt_to_csv.parse_args)
     
-    vprint("Creating Modeler...")
-    model = Modeler(cmd.args.civet_output, cmd.args.user_ratings, cmd.args.cutoff)
-    vprint("Done!")
+    # get args from command line and pass to function
+    args = parser.parse_args(sys.argv[1:])
+    args.func(args)
 
 if __name__ == "__main__":
     main()

@@ -54,9 +54,14 @@ class DuplicateIdentifierError(Exception):
     pass
 
 
+class InvalidCutoffError(ValueError):
+    """ raised when cutoff value below one is provided """
+    pass
+
 class NegativeQCRatingError(ValueError):
     """ raised when negative QC value is in CSV file """
     pass
+
 
 
 class DataPartition:
@@ -164,6 +169,9 @@ class Dataset:
         if not all(self.df[self.qcvar] >= 0):
             raise NegativeQCRatingError
         
+        if cutoff_value < 1:
+            raise InvalidCutoffError
+        
         self.df[self.qcvar] = np.where(self.df[self.qcvar] < cutoff_value, 0, 1)
         assert self.all_in_range(self.qcvar, 2)
 
@@ -266,39 +274,3 @@ class MasterDataset(Dataset):
         x_train, x_test, y_train, y_test = train_test_split(features_array, target_array, random_state=1)
         self.features = DataPartition(x_train, x_test)
         self.target = DataPartition(y_train, y_test)
-
-
-def dict_values_equal(d: dict):
-    """ returns whether all values in dict are of equal length """
-    req_len = len(list(d.values())[0])
-    for key in d:
-        if len(d[key]) != req_len:
-            return False
-    return True
-
-
-def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
-    """ given a directory containing civet txt outputs, creates a single csv file """
-    
-    # Get list of patient files in directory
-    patient_files = {}
-    for filename in os.listdir(dir_name):
-        if "civet_qc" in filename:
-            patient_files[filename.split("_")[0]] = filename
-
-    # Open each file and append data to dictionary
-    civet_dict = {"ID": []}
-    for patient_id in patient_files:
-        civet_dict["ID"].append(patient_id)
-        with open(os.path.join(dir_name, patient_files[patient_id]), 'r') as f:
-            for line in f:
-                var, value = line.split("=")
-                try:
-                    civet_dict[var].append(value.strip("\n"))
-                except KeyError:
-                    civet_dict[var] = [value.strip("\n")]
-
-    # Verify length of all values are equal and write to csv
-    if not dict_values_equal(civet_dict):
-        raise ValueError("all values in dictionary are not equal!")
-    pd.DataFrame(civet_dict).to_csv(output_dir, index=False)
