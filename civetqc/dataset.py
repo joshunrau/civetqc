@@ -1,5 +1,6 @@
 import os
 from typing import Union
+
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -108,8 +109,8 @@ class StudyData:
         try:
             self.df = pd.merge(self.civet_data, self.qc_data, on=self.idvar).dropna()
         except ValueError as err:
-            raise DataFrameMergerError(f"Error merging dataframes from files '{civet_csv}' and '{qc_csv}, {err}")
-        
+            raise DataFrameMergerError(f"Error merging dataframes from files '{civet_csv}' and '{qc_csv}") from err
+
         self.df = self.df[[self.idvar, self.qcvar] + self.feature_names]
         self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
 
@@ -117,7 +118,7 @@ class StudyData:
             raise NegativeQCRatingError
         if cutoff_value < 1:
             raise InvalidCutoffError
-        
+
         self.df[self.qcvar] = np.where(self.df[self.qcvar] < cutoff_value, 0, 1)
         assert self.all_in_range(self.qcvar, cutoff_value + 1)
 
@@ -139,10 +140,16 @@ class StudyData:
 
 class DataPartition:
     """ container for test and training sets """
+
     def __init__(self, features: np.ndarray, target: np.ndarray) -> None:
         assert isinstance(features, np.ndarray) and isinstance(target, np.ndarray)
         assert features.ndim == 2 and target.ndim == 1
         self.features, self.target = features, target
+
+    def __str__(self) -> str:
+        return "Target Class Counts\n" + '\n'.join(
+            f"{': '.join([str(y) for y in list(x)])} ({round(x[-1] / len(self.target) * 100, 2)}%)" for x in
+            np.array(np.unique(self.target, return_counts=True)).T)
 
 
 class Dataset(StudyData):
@@ -190,7 +197,7 @@ class Dataset(StudyData):
         )
     }
 
-    def __init__(self, cutoff_value: int = 1, balanced: bool = False, list_features: Union[None, list] = None)  -> None:
+    def __init__(self, cutoff_value: int = 1, balanced: bool = False, list_features: Union[None, list] = None) -> None:
         """
         Parameters
         ----------
@@ -218,7 +225,7 @@ class Dataset(StudyData):
         if balanced:
             min_cls = self.df[self.qcvar].value_counts().min()
             self.df = self.df.groupby(self.qcvar).sample(n=min_cls).sort_values(by=self.idvar)
-        
+
         if list_features is not None:
             self.vars_in_cols(self.df, list_features)
             self.feature_names = list_features
@@ -228,6 +235,6 @@ class Dataset(StudyData):
         self.features = self.df[self.feature_names].to_numpy()
         self.target = self.df[self.qcvar].to_numpy()
 
-        X_train, X_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
-        self.train = DataPartition(X_train, y_train)
-        self.test = DataPartition(X_test, y_test)
+        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
+        self.train = DataPartition(x_train, y_train)
+        self.test = DataPartition(x_test, y_test)
