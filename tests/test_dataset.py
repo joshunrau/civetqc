@@ -69,8 +69,6 @@ class TestStudyData(unittest.TestCase, dataset.Dataset):
                 dat.negative_qc_rating()
             dat.write_data()
             cls.error_filepaths[min_id] = (dat.civet_path, dat.qc_path)
-        
-        assert len([f for f in os.listdir(SimulatedStudyData.simulated_data_dir) if f.endswith(".csv")]) == 16
 
     @classmethod
     def tearDownClass(cls) -> None:

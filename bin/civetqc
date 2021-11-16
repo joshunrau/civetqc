@@ -5,17 +5,20 @@ from civetqc.txt_to_csv import txt2csv_parse_args
 import sys
 
 
+def parse_args():
+    if 
+
+
+
+
 def main():
 
     parser = argparse.ArgumentParser(prog="civetqc")
-    subparsers = parser.add_subparsers(title='subcommands', description='valid subcommands', help='additional help')
+    # add arg for path to civet qc file
+    # add arg for path to user ratings
+    # merge as data object
+    # pickle import 
 
-    # create the parser for the 'txt_to_csv' command
-    txt2csv = subparsers.add_parser("txt2csv", help="convert CIVET QC outputs from txt to csv")
-    txt2csv.add_argument("input", help="path to directory containing txt files")
-    txt2csv.add_argument("output", help="path to directory where csv should be outputted")
-    txt2csv.set_defaults(func=txt2csv_parse_args)
-    
     # get args from command line and pass to function
     args = parser.parse_args(sys.argv[1:])
     args.func(args)

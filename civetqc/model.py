@@ -93,7 +93,6 @@ class RandomForestModel(BaseModel):
         model.fit(self.train.features, self.train.target)
         return model
 
-
 def main():
     data = Dataset(cutoff_value=1, balanced=True, list_features=None)
     forest = RandomForestModel(data)

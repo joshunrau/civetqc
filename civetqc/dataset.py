@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import os
 from typing import Union
 
@@ -112,21 +113,23 @@ class StudyData:
 
         self.df = self.df[[self.idvar, self.qcvar] + self.feature_names]
         self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
-
+        
         if not all(self.df[self.qcvar] >= 0):
             raise NegativeQCRatingError
-        if cutoff_value < 1:
+
+        self.cutoff_value = cutoff_value
+        if self.cutoff_value < 1:
             raise InvalidCutoffError
 
-        self.df[self.qcvar] = np.where(self.df[self.qcvar] < cutoff_value, 0, 1)
-        assert self.all_in_range(self.qcvar, cutoff_value + 1)
+        self.df[self.qcvar] = np.where(self.df[self.qcvar] < self.cutoff_value, 0, 1)
+        assert self.all_in_range(self.qcvar, self.cutoff_value + 1)
 
     def all_in_range(self, var: str, r: int) -> bool:
         for value in self.df[var]:
             if value not in range(r):
                 return False
         return True
-
+    
     @staticmethod
     def vars_in_cols(df: pd.DataFrame, list_vars: list, filename: Union[str, None] = None) -> None:
         assert isinstance(df, pd.DataFrame) and isinstance(list_vars, list)
@@ -174,7 +177,7 @@ class Dataset(StudyData):
         )
     }
 
-    def __init__(self, cutoff_value, balanced: bool, list_features: Union[None, list]) -> None:
+    def __init__(self, cutoff_value: int, balanced: bool, list_features: Union[None, list]) -> None:
         """
         Parameters
         ----------
@@ -195,7 +198,7 @@ class Dataset(StudyData):
                 self.df = pd.concat([self.df, study_data.df])
 
         assert self.df[self.idvar].is_unique
-        assert self.all_in_range(self.qcvar, cutoff_value + 1)
+        assert self.all_in_range(self.qcvar, self.cutoff_value + 1)
         self.vars_in_cols(self.df, self.required_all_vars)
         self.df[self.idvar] = list(range(1, len(self.df[self.idvar]) + 1))
 
@@ -208,4 +211,3 @@ class Dataset(StudyData):
             self.feature_names = list_features
             self.required_all_vars = [self.idvar, self.qcvar] + self.feature_names
             self.df = self.df[self.required_all_vars]
-
