@@ -3,7 +3,6 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 
 
 class VariableNotFoundError(Exception):
@@ -138,20 +137,6 @@ class StudyData:
                 raise VariableNotFoundError(f"Required variable {var} not found in file {filename}")
 
 
-class DataPartition:
-    """ container for test and training sets """
-
-    def __init__(self, features: np.ndarray, target: np.ndarray) -> None:
-        assert isinstance(features, np.ndarray) and isinstance(target, np.ndarray)
-        assert features.ndim == 2 and target.ndim == 1
-        self.features, self.target = features, target
-
-    def __str__(self) -> str:
-        return "Target Class Counts\n" + '\n'.join(
-            f"{': '.join([str(y) for y in list(x)])} ({round(x[-1] / len(self.target) * 100, 2)}%)" for x in
-            np.array(np.unique(self.target, return_counts=True)).T)
-
-
 class Dataset(StudyData):
     """
     This class contains merged data from several studies.
@@ -166,14 +151,6 @@ class Dataset(StudyData):
         Paths to the CSV files for each study that will be imported
     df: pd.DataFrame
         Dataframe containing merged data from all studies
-    features: np.ndarray
-        2D array of features
-    target: np.ndarray
-        1D array of targets
-    train: DataPartition
-        Training set
-    test: DataPartition
-        Testing set
     """
 
     studies_dir = "/Users/joshua/Developer/civetqc/data/studies"
@@ -197,7 +174,7 @@ class Dataset(StudyData):
         )
     }
 
-    def __init__(self, cutoff_value: int = 1, balanced: bool = False, list_features: Union[None, list] = None) -> None:
+    def __init__(self, cutoff_value, balanced: bool, list_features: Union[None, list]) -> None:
         """
         Parameters
         ----------
@@ -232,9 +209,3 @@ class Dataset(StudyData):
             self.required_all_vars = [self.idvar, self.qcvar] + self.feature_names
             self.df = self.df[self.required_all_vars]
 
-        self.features = self.df[self.feature_names].to_numpy()
-        self.target = self.df[self.qcvar].to_numpy()
-
-        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
-        self.train = DataPartition(x_train, y_train)
-        self.test = DataPartition(x_test, y_test)

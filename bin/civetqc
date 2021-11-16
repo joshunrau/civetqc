@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-
 import argparse
-from civetqc.utils import txt2csv_parse_args
+from civetqc.txt_to_csv import txt2csv_parse_args
 import sys
 
 
