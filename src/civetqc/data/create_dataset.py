@@ -1,22 +1,13 @@
-import os
 from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 from ..exceptions import VariableNotFoundError, DuplicateIdentifierError, DataFrameMergerError, NegativeQCRatingError
 
 
-class _StudyPaths:
-    ROOT = "/Users/joshua/Developer/civetqc/data"
-    FEP = os.path.join(ROOT, "FEP", "FEP_civet_data.csv"), os.path.join(ROOT, "FEP", "FEP_QC.csv"),
-    LAM = os.path.join(ROOT, "LAM", "LAM_civet_data.csv"), os.path.join(ROOT, "LAM", "LAM_QC.csv"),
-    INSIGHT = os.path.join(ROOT, "INSIGHT", "INSIGHT_civet_data.csv"), os.path.join(ROOT, "INSIGHT", "INSIGHT_QC.csv"),
-    TOPSY = os.path.join(ROOT, "TOPSY", "TOPSY_civet_data.csv"), os.path.join(ROOT, "TOPSY", "TOPSY_QC.csv")
-    ALL = [FEP, LAM, INSIGHT, TOPSY]
-
-
-class _BaseData(ABC):
+class BaseData(ABC):
     """ inherited by all data classes """
 
     idvar = "ID"
@@ -48,7 +39,7 @@ class _BaseData(ABC):
         pass
 
 
-class CIVETData(_BaseData):
+class CIVETData(BaseData):
     """ data from CIVET output file """
 
     feature_names = [
@@ -68,7 +59,7 @@ class CIVETData(_BaseData):
         return [self.idvar] + self.feature_names
 
 
-class QCData(_BaseData):
+class QCData(BaseData):
     """ data from QC ratings file """
 
     qcvar = "QC"
@@ -81,7 +72,7 @@ class QCData(_BaseData):
         return [self.idvar, self.qcvar]
 
 
-class _StudyData(CIVETData, QCData):
+class StudyData(CIVETData, QCData):
     """ encapsulates data from one CIVET output and one QC ratings file """
 
     def __init__(self, civet_csv: str, qc_csv: str, cutoff_value: int = 1) -> None:
@@ -112,16 +103,16 @@ class _StudyData(CIVETData, QCData):
         return [self.idvar, self.qcvar] + self.feature_names
 
 
-class Dataset(_StudyData):
+class MergedDataset(StudyData):
 
-    def __init__(self, balanced: bool = False) -> None:
+    def __init__(self, study_paths: list, balanced: bool = False) -> None:
 
         self.df = None
-        for study in _StudyPaths.ALL:
+        for study in study_paths:
             if self.df is None:
                 super().__init__(study[0], study[1])
             else:
-                study_data = _StudyData(study[0], study[1])
+                study_data = StudyData(study[0], study[1])
                 self.df = pd.concat([self.df, study_data.df])
 
         self.check_required_vars()
@@ -135,3 +126,31 @@ class Dataset(_StudyData):
     @property
     def required_vars(self):
         return super().required_vars
+
+
+class DataPartition:
+    """ container for test and training sets """
+
+    def __init__(self, features: np.ndarray, target: np.ndarray) -> None:
+        assert isinstance(features, np.ndarray) and isinstance(target, np.ndarray)
+        assert features.ndim == 2 and target.ndim == 1
+        self.features, self.target = features, target
+
+    def __str__(self) -> str:
+        return "Target Class Counts\n" + '\n'.join(
+            f"{': '.join([str(y) for y in list(x)])} ({round(x[-1] / len(self.target) * 100, 2)}%)" for x in
+            np.array(np.unique(self.target, return_counts=True)).T)
+
+
+class Dataset:
+    """ final format of dataset to build model """
+
+    target_names = ["Acceptable", "Unacceptable"]
+
+    def __init__(self, data: MergedDataset) -> None:
+        self.feature_names = data.feature_names
+        self.features = data.df[data.feature_names].to_numpy()
+        self.target = data.df[data.qcvar].to_numpy()
+        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
+        self.train = DataPartition(x_train, y_train)
+        self.test = DataPartition(x_test, y_test)

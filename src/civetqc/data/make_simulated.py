@@ -4,15 +4,10 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-from .make_dataset import Dataset
+from .create_dataset import MergedDataset
 
 
-SIMULATED_DIR = "/Users/joshua/Developer/civetqc/src/civetqc/data/simulated_data"
-
-
-class _SimulatedData(ABC):
-
-    simulated_dir = SIMULATED_DIR
+class SimulatedData(ABC):
 
     @property
     @abstractmethod
@@ -28,10 +23,11 @@ class _SimulatedData(ABC):
         self.simulated_data.to_csv(self.output_path, index=False)
 
 
-class _SimulatedDataset(_SimulatedData, Dataset):
+class SimulatedDataset(SimulatedData, MergedDataset):
 
-    def __init__(self) -> None:
-        super().__init__(balanced=True)
+    def __init__(self, study_paths: list, balanced: bool, simulated_dir: str) -> None:
+        super().__init__(study_paths, balanced)
+        self.simulated_dir = simulated_dir
 
     @property
     def output_path(self):
@@ -64,10 +60,10 @@ class _SimulatedDataset(_SimulatedData, Dataset):
         self.simulated_data.loc[0, self.idvar] = self.simulated_data.loc[1, self.idvar]
 
 
-class _SimulatedCIVETData(_SimulatedDataset):
+class SimulatedCIVETData(SimulatedDataset):
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, study_paths: list, balanced: bool, simulated_dir: str) -> None:
+        super().__init__(study_paths, balanced, simulated_dir)
 
     @property
     def output_path(self):
@@ -78,10 +74,10 @@ class _SimulatedCIVETData(_SimulatedDataset):
         return super().simulated_data[[self.idvar] + self.feature_names]
 
 
-class _SimulatedQCData(_SimulatedDataset):
+class SimulatedQCData(SimulatedDataset):
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, study_paths: list, balanced: bool, simulated_dir: str) -> None:
+        super().__init__(study_paths, balanced, simulated_dir)
 
     @property
     def output_path(self):
@@ -96,13 +92,3 @@ class _SimulatedQCData(_SimulatedDataset):
 
     def negative_qc_rating(self):
         self.simulated_data.loc[0, self.qcvar] = -1
-
-
-def make_simulated():
-    _SimulatedDataset().to_csv()
-    _SimulatedCIVETData().to_csv()
-    _SimulatedQCData().to_csv()
-
-
-if __name__ == "__main__":
-    make_simulated()
