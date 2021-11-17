@@ -1,4 +1,3 @@
-import argparse
 import os
 from typing import Union
 
@@ -42,7 +41,3 @@ def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
         raise ValueError("all values in dictionary are not equal!")
     df = pd.DataFrame(civet_dict).sort_values(by="ID")
     df.to_csv(outfile, index=False)
-
-
-def txt2csv_parse_args(args: argparse.Namespace) -> None:
-    txt_to_csv(args.input, args.output)
