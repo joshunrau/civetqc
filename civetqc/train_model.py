@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
-import numpy as np
 import pickle
-from sklearn.metrics import classification_report
+from abc import ABC, abstractmethod
+
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
-from .dataset import Dataset
+
+from .create_dataset import Dataset
 
 
 class DataPartition:
@@ -22,7 +24,6 @@ class DataPartition:
 
 
 class BaseModel(ABC):
-
     target_names = ["Acceptable", "Unacceptable"]
 
     def __init__(self, data: Dataset) -> None:
@@ -32,10 +33,10 @@ class BaseModel(ABC):
         x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
         self.train = DataPartition(x_train, y_train)
         self.test = DataPartition(x_test, y_test)
-    
+
     def __str__(self) -> str:
         return classification_report(self.test.target, self.predicted)
-    
+
     def save(self, filepath):
         with open(filepath, 'wb') as f:
             pickle.dump(self.model, f)
@@ -54,7 +55,7 @@ class RandomForestModel(BaseModel):
 
     def __init__(self, data: Dataset) -> None:
         super().__init__(data)
-    
+
     @property
     def model(self):
         model = RandomForestClassifier(n_estimators=100, random_state=0)

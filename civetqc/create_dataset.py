@@ -1,32 +1,15 @@
+import os
 from abc import ABC, abstractmethod
+
 import numpy as np
 import pandas as pd
-import os
 
-
-class VariableNotFoundError(Exception):
-    """ raised when a required variable is not found in CSV file """
-    pass
-
-
-class DuplicateIdentifierError(Exception):
-    """ raised when a value for the ID variable appears more than once """
-    pass
-
-
-class NegativeQCRatingError(ValueError):
-    """ raised when negative QC value is in CSV file """
-    pass
-
-
-class DataFrameMergerError(ValueError):
-    """ raised when cannot merge dataframes on key var due to type """
-    pass
+from .exceptions import VariableNotFoundError, DuplicateIdentifierError, NegativeQCRatingError, DataFrameMergerError
 
 
 class BaseData(ABC):
     """ inherited by all data classes """
-    
+
     idvar = "ID"
 
     def __init__(self, path_csv: str) -> None:
@@ -42,7 +25,7 @@ class BaseData(ABC):
                     raise VariableNotFoundError(f"Required variable {var} not found in file {self.path_csv}")
                 except AttributeError as err:
                     raise AssertionError from err
-    
+
     def check_ids_unique(self):
         if not len(self.df[self.idvar].unique()) == len(self.df[self.idvar]):
             try:
@@ -58,7 +41,7 @@ class BaseData(ABC):
 
 class CIVETData(BaseData):
     """ data from CIVET output file """
-    
+
     feature_names = [
         "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT",
         "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL",
@@ -78,7 +61,7 @@ class CIVETData(BaseData):
 
 class QCData(BaseData):
     """ data from QC ratings file """
-    
+
     qcvar = "QC"
 
     def __init__(self, path_csv: str) -> None:
@@ -96,12 +79,12 @@ class StudyData(CIVETData, QCData):
 
         self.civet_data = CIVETData(civet_csv)
         self.qc_data = QCData(qc_csv)
-        
+
         try:
             self.df = pd.merge(self.civet_data.df, self.qc_data.df, on=self.idvar).dropna()
         except Exception as err:
             raise DataFrameMergerError(f"Error merging data from files '{civet_csv}' and '{qc_csv}'") from err
-        
+
         self.df = self.df[self.required_vars]
         self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
 
@@ -114,14 +97,13 @@ class StudyData(CIVETData, QCData):
 
         self.df[self.qcvar] = np.where(self.df[self.qcvar] < self.cutoff_value, 0, 1)
         assert all([x in range(self.cutoff_value + 1) for x in self.df[self.qcvar]])
-    
+
     @property
     def required_vars(self):
         return [self.idvar, self.qcvar] + self.feature_names
 
 
 class Dataset(StudyData):
-
     studies_dir = "/Users/joshua/Developer/civetqc/data/studies"
 
     study_filepaths = {
@@ -160,3 +142,7 @@ class Dataset(StudyData):
         if balanced:
             min_cls = self.df[self.qcvar].value_counts().min()
             self.df = self.df.groupby(self.qcvar).sample(n=min_cls).sort_values(by=self.idvar)
+
+    @property
+    def required_vars(self):
+        return super().required_vars

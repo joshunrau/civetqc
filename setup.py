@@ -25,5 +25,5 @@ setup(
     ],
     packages=find_packages(include=["civetqc"]),
     python_requires=">=3.8",
-    
+    scripts=["bin/civetqc"]
 )

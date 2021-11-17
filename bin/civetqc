@@ -1,21 +1,36 @@
 #!/usr/bin/env python
 
 import argparse
-from civetqc.txt_to_csv import txt2csv_parse_args
 import sys
 
+from civetqc.create_dataset import CIVETData
+
+
+SIMULATED_CIVET = "/Users/joshua/Developer/civetqc/data/simulated/simulated_civet.csv"
+
+
+class Model:
+
+    def __init__(self) -> None:
+        pass
+
+    
+    
+
+def predict_qc(data: CIVETData):
+
+    
+    
 
 def main():
 
     parser = argparse.ArgumentParser(prog="civetqc")
-    parser.add_argument("civet_output", help="path to csv file outputted by CIVET")
-    
-    # merge as data object
-    # pickle import 
+    parser.add_argument("path_csv", help="path to csv file outputted by CIVET")
+    # args = parser.parse_args(sys.argv[1:])
+    args = parser.parse_args([SIMULATED_CIVET])
 
-    # get args from command line and pass to function
-    args = parser.parse_args(sys.argv[1:])
-    args.func(args)
+    civet_data = CIVETData(args.path_csv)
+    print(civet_data.df)
 
 
 if __name__ == "__main__":

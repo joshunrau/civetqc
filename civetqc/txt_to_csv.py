@@ -1,7 +1,8 @@
 import argparse
 import os
-import pandas as pd
 from typing import Union
+
+import pandas as pd
 
 
 def dict_values_equal(d: dict) -> bool:
@@ -15,9 +16,9 @@ def dict_values_equal(d: dict) -> bool:
 
 def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
     """ given a directory containing civet txt outputs, creates a single csv file """
-    
+
     outfile = os.path.join(output_dir, "civetqc_txt2csv.csv")
-    
+
     # Get list of patient files in directory
     patient_files = {}
     for filename in os.listdir(dir_name):
