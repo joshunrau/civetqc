@@ -26,6 +26,6 @@ setup(
     python_requires=">=3.8",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    scripts=["bin/civetqc"],
+    scripts=["civetqc"],
     include_package_data=True
 )
