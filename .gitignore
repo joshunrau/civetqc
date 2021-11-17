@@ -135,8 +135,7 @@ dmypy.json
 .idea/
 
 # Patient data
-data/studies/
-data/tests/
+data/
 
 # jupyter
 .ipynb_checkpoints
@@ -144,3 +143,4 @@ data/tests/
 
 # ignore test notebooks
 tmp/
+

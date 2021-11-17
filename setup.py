@@ -23,7 +23,8 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=find_packages(include=["civetqc"]),
     python_requires=">=3.8",
-    scripts=["bin/civetqc"]
+    packages=["civetqc"],
+    scripts=["bin/civetqc"],
+    include_package_data=True
 )
