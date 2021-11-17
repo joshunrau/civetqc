@@ -4,16 +4,15 @@ import argparse
 import pickle
 import sys
 import os
-import civetqc.config as cfg
-
+from civetqc.data.make_simulated import make_simulated
+from civetqc.data.make_dataset import _StudyPaths
 
 def load_saved_model(filepath: str):
     with open(filepath, 'rb') as f:
         return pickle.load(f)
 
 def main():
-    print(cfg.ModulePaths.root)
-    print(cfg.StudyPaths.root, cfg.StudyPaths.TOPSY)
+    make_simulated()
 
     #parser = argparse.ArgumentParser(prog="civetqc")
     #parser.add_argument("path_csv", help="path to csv file outputted by CIVET")

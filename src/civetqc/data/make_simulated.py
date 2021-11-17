@@ -7,11 +7,11 @@ import pandas as pd
 from .make_dataset import Dataset
 
 
-SIMULATED_DIR = "/Users/joshua/Developer/civetqc/src/civetqc/data/simulated_dataset"
+SIMULATED_DIR = "/Users/joshua/Developer/civetqc/src/civetqc/data/simulated_data"
 
 
 class _SimulatedData(ABC):
-    
+
     simulated_dir = SIMULATED_DIR
 
     @property

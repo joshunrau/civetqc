@@ -8,14 +8,11 @@ from ..exceptions import VariableNotFoundError, DuplicateIdentifierError, DataFr
 
 
 class _StudyPaths:
-
     ROOT = "/Users/joshua/Developer/civetqc/data"
-
     FEP = os.path.join(ROOT, "FEP", "FEP_civet_data.csv"), os.path.join(ROOT, "FEP", "FEP_QC.csv"),
     LAM = os.path.join(ROOT, "LAM", "LAM_civet_data.csv"), os.path.join(ROOT, "LAM", "LAM_QC.csv"),
     INSIGHT = os.path.join(ROOT, "INSIGHT", "INSIGHT_civet_data.csv"), os.path.join(ROOT, "INSIGHT", "INSIGHT_QC.csv"),
     TOPSY = os.path.join(ROOT, "TOPSY", "TOPSY_civet_data.csv"), os.path.join(ROOT, "TOPSY", "TOPSY_QC.csv")
-
     ALL = [FEP, LAM, INSIGHT, TOPSY]
 
 
@@ -116,7 +113,7 @@ class _StudyData(CIVETData, QCData):
 
 
 class Dataset(_StudyData):
-    
+
     def __init__(self, balanced: bool = False) -> None:
 
         self.df = None
@@ -138,5 +135,3 @@ class Dataset(_StudyData):
     @property
     def required_vars(self):
         return super().required_vars
-
-

@@ -24,7 +24,8 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.8",
-    packages=["civetqc"],
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     scripts=["bin/civetqc"],
     include_package_data=True
 )
