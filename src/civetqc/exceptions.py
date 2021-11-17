@@ -16,3 +16,13 @@ class NegativeQCRatingError(ValueError):
 class DataFrameMergerError(Exception):
     """ raised when cannot merge dataframes on key var due to type """
     pass
+
+
+class ModelNotFoundError(FileNotFoundError):
+    """ raised when path to saved model does not exist """
+    pass
+
+
+class InvalidClassifierError(TypeError):
+    """ raised when non-sklearn classifier object is passed """
+    pass

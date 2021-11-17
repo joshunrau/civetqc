@@ -27,5 +27,6 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     scripts=["civetqc"],
-    include_package_data=True
+    include_package_data=True,
+    package_data={"" : ["data/simulated_data/*.csv", "model/*.pkl"]}
 )

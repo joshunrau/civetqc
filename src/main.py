@@ -1,11 +1,8 @@
 import os
 
-import civetqc as qc
-from civetqc import data
 from civetqc.data.create_dataset import MergedDataset
 from civetqc.data.make_simulated import SimulatedCIVETData, SimulatedDataset, SimulatedQCData
 from civetqc.model.train import TrainModel
-
 
 SIMULATED_DIR = "/Users/joshua/Developer/civetqc/src/civetqc/data/simulated_data"
 MODEL_OUTPUT = "/Users/joshua/Developer/civetqc/src/civetqc/model/model.pkl"
@@ -30,10 +27,9 @@ class StudyPaths:
 
 def main():
     merged_data = MergedDataset(study_paths=StudyPaths.ALL, balanced=True)
-    model = TrainModel(data = merged_data)
+    model = TrainModel(data=merged_data)
     model.save(MODEL_OUTPUT)
 
 
 if __name__ == "__main__":
     main()
-

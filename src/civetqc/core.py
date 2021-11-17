@@ -1,13 +1,11 @@
 import argparse
 import os
 import pickle
+
 import pkg_resources
 
-from .exceptions import ModelNotFoundError, InvalidClassifierError
 from .data.create_dataset import CIVETData
-
-
-PATH_SAVED_MODEL =  pkg_resources.resource_filename(__name__, 'model/model.pkl')
+from .exceptions import ModelNotFoundError, InvalidClassifierError
 
 
 class UserArguments:
@@ -18,10 +16,10 @@ class UserArguments:
         parser.add_argument("output_dir", help="path to directory to output results in")
         self.args = parser.parse_args(args)
         self.path_csv, self.output_dir = self.args.path_csv, self.args.output_dir
-    
+
     def __str__(self) -> str:
         return str(self.args)
-    
+
     def verify_paths(self):
         if not os.path.isfile(self.path_csv):
             raise FileNotFoundError
@@ -32,12 +30,12 @@ class UserArguments:
 class UserData(CIVETData):
 
     qcvar = "PREDICTED_QC"
-
+    output_filename = "civetqc.csv"
     def __init__(self, path_csv: str) -> None:
         super().__init__(path_csv)
         self.feature_names = self.feature_names
         self.features = self.df[self.feature_names].to_numpy()
-    
+
     def predict_qc(self, clf, update_df: bool = False):
 
         try:
@@ -49,12 +47,12 @@ class UserData(CIVETData):
             self.df[self.qcvar] = self.predicted_qc
         else:
             print(self.predicted_qc)
-    
+
     def write_csv(self, dir_name: str):
         if self.qcvar not in self.df.columns:
             raise ValueError(f"UserData object requires {self.qcvar} in dataframe before writing to file")
-        self.df.to_csv(os.path.join(dir_name, "civetqc.csv"), index=False)
-        
+        self.df.to_csv(os.path.join(dir_name, self.output_filename), index=False)
+
 
 class SavedModel:
 
@@ -66,3 +64,18 @@ class SavedModel:
                 self.clf = pickle.load(f)
         except FileNotFoundError as err:
             raise ModelNotFoundError from err
+
+
+def main(args: list):
+
+    # Process user arguments
+    usr_args = UserArguments(args)
+    usr_args.verify_paths()
+
+    # Load saved model
+    clf = SavedModel().clf
+
+    # Use model to predict
+    data = UserData(usr_args.path_csv)
+    data.predict_qc(clf, update_df=True)
+    data.write_csv(usr_args.output_dir)

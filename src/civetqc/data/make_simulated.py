@@ -49,7 +49,7 @@ class SimulatedDataset(SimulatedData, MergedDataset):
     def simulated_data(self):
         data = {v: [] for v in self.required_vars}
         data[self.idvar] += list(range(100))
-        data[self.qcvar] += [np.random.randint(0, 2) for x in range(100)]
+        data[self.qcvar] += np.random.randint(0, 2, size=100).tolist()
         for feature in self.feature_names:
             for qc in data[self.qcvar]:
                 m, sd = self.means[feature][qc], self.stds[feature][qc]
