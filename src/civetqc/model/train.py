@@ -6,9 +6,6 @@ from sklearn.metrics import classification_report
 from ..data.create_dataset import Dataset, MergedDataset
 
 
-MODEL_OUTPUT = "/Users/joshua/Developer/civetqc/src/civetqc/model/model.pkl"
-
-
 class TrainModel(Dataset):
     
     def __init__(self, data: MergedDataset) -> None:
@@ -25,15 +22,4 @@ class TrainModel(Dataset):
     
     def save(self, filepath):
         with open(filepath, 'wb') as f:
-            pickle.dump(self.model, f)
-        
-
-def train_model():
-    model = TrainModel(data = MergedDataset(balanced=True))
-    print(model)
-    model.save(MODEL_OUTPUT)
-
-
-
-
-import civetqc as qc''
+            pickle.dump(self.clf, f)
