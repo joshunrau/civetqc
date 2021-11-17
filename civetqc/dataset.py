@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-import os
-from typing import Union
-
 import numpy as np
 import pandas as pd
+import os
 
 
 class VariableNotFoundError(Exception):
@@ -13,11 +11,6 @@ class VariableNotFoundError(Exception):
 
 class DuplicateIdentifierError(Exception):
     """ raised when a value for the ID variable appears more than once """
-    pass
-
-
-class InvalidCutoffError(ValueError):
-    """ raised when cutoff value below one is provided """
     pass
 
 
@@ -31,44 +24,41 @@ class DataFrameMergerError(ValueError):
     pass
 
 
-class StudyData:
-    """ 
-    This class contains data from one CIVET output and one QC ratings file.
+class BaseData(ABC):
+    """ inherited by all data classes """
     
-    ...
-
-    Attributes
-    ----------
-    idvar : str
-        Name of the ID variable which must be in imported csv files
-    qcvar : str
-        Name of the column containing user QC ratings
-    civet_data: pd.DataFrame
-        Dataframe created from CSV file outputted by CIVET
-    qc_data: str
-        Dataframe created from QC ratings associated with a study
-    feature_names : list
-        List of the names of the features outputted by CIVET
-    required_civet_vars : list
-        List of variable names required to be in the CIVET output file
-    required_user_vars : list
-        List of variable names required to be in the user ratings file
-    required_all_vars : list
-        List of variable names that must be in self.df
-    df : pd.DataFrame
-        Merged dataframe created from CIVET output and user ratings
-
-    Methods
-    ----------------
-    all_in_range(self, var: str, r: int)
-        Returns whether all values in self.df[var] are in range(r)
-    vars_in_cols(df: pd.DataFrame, list_vars: list, filename: str)
-        Raises a VariableNotFoundError if all strings in list_vars are not in df.columns
-
-    """
-
     idvar = "ID"
-    qcvar = "QC"
+
+    def __init__(self, path_csv: str) -> None:
+        self.path_csv = path_csv
+        self.df = pd.read_csv(path_csv)
+        self.check_required_vars()
+        self.check_ids_unique()
+
+    def check_required_vars(self):
+        for var in self.required_vars:
+            if var not in self.df.columns:
+                try:
+                    raise VariableNotFoundError(f"Required variable {var} not found in file {self.path_csv}")
+                except AttributeError as err:
+                    raise AssertionError from err
+    
+    def check_ids_unique(self):
+        if not len(self.df[self.idvar].unique()) == len(self.df[self.idvar]):
+            try:
+                raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {self.path_csv}")
+            except AttributeError as err:
+                raise AssertionError from err
+
+    @property
+    @abstractmethod
+    def required_vars(self):
+        pass
+
+
+class CIVETData(BaseData):
+    """ data from CIVET output file """
+    
     feature_names = [
         "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT",
         "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL",
@@ -77,84 +67,60 @@ class StudyData:
         "LEFT_INTER", "RIGHT_INTER", "LEFT_SURF_SURF", "RIGHT_SURF_SURF", "LAPLACIAN_MIN",
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
     ]
-    required_civet_vars = [idvar] + feature_names
-    required_user_vars = [idvar, qcvar]
-    required_all_vars = [idvar, qcvar] + feature_names
+
+    def __init__(self, path_csv: str) -> None:
+        super().__init__(path_csv)
+
+    @property
+    def required_vars(self):
+        return [self.idvar] + self.feature_names
+
+
+class QCData(BaseData):
+    """ data from QC ratings file """
+    
+    qcvar = "QC"
+
+    def __init__(self, path_csv: str) -> None:
+        super().__init__(path_csv)
+
+    @property
+    def required_vars(self):
+        return [self.idvar, self.qcvar]
+
+
+class StudyData(CIVETData, QCData):
+    """ encapsulates data from one CIVET output and one QC ratings file """
 
     def __init__(self, civet_csv: str, qc_csv: str, cutoff_value: int = 1) -> None:
-        """
-        Parameters
-        ----------
-        civet_csv: str
-            path to the csv file outputted by CIVET
-        qc_csv: str
-            path to the csv file containing the user's QC ratings
-        cutoff_value: int
-            the cutoff value for a valid scan
-        """
 
-        self.civet_data = pd.read_csv(civet_csv)
-        self.qc_data = pd.read_csv(qc_csv)
-
-        self.vars_in_cols(self.civet_data, self.required_civet_vars, civet_csv)
-        self.vars_in_cols(self.qc_data, self.required_user_vars, qc_csv)
-
-        # Check that all values for ID variable are unique
-        if not len(self.civet_data[self.idvar].unique()) == len(self.civet_data[self.idvar]):
-            raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {civet_csv}")
-        if not len(self.qc_data[self.idvar].unique()) == len(self.qc_data[self.idvar]):
-            raise DuplicateIdentifierError(f"Non-unique values for ID variable in file {qc_csv}")
-
-        # ValueError may be raised if the data types are different
-        try:
-            self.df = pd.merge(self.civet_data, self.qc_data, on=self.idvar).dropna()
-        except ValueError as err:
-            raise DataFrameMergerError(f"Error merging dataframes from files '{civet_csv}' and '{qc_csv}") from err
-
-        self.df = self.df[[self.idvar, self.qcvar] + self.feature_names]
-        self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
+        self.civet_data = CIVETData(civet_csv)
+        self.qc_data = QCData(qc_csv)
         
+        try:
+            self.df = pd.merge(self.civet_data.df, self.qc_data.df, on=self.idvar).dropna()
+        except Exception as err:
+            raise DataFrameMergerError(f"Error merging data from files '{civet_csv}' and '{qc_csv}'") from err
+        
+        self.df = self.df[self.required_vars]
+        self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
+
         if not all(self.df[self.qcvar] >= 0):
-            raise NegativeQCRatingError
+            raise NegativeQCRatingError(f"All QC ratings in file {qc_csv} must greater than zero")
 
         self.cutoff_value = cutoff_value
-        if self.cutoff_value < 1:
-            raise InvalidCutoffError
+        if cutoff_value < 1:
+            raise ValueError("Cutoff value must be greater than zero")
 
         self.df[self.qcvar] = np.where(self.df[self.qcvar] < self.cutoff_value, 0, 1)
-        assert self.all_in_range(self.qcvar, self.cutoff_value + 1)
-
-    def all_in_range(self, var: str, r: int) -> bool:
-        for value in self.df[var]:
-            if value not in range(r):
-                return False
-        return True
+        assert all([x in range(self.cutoff_value + 1) for x in self.df[self.qcvar]])
     
-    @staticmethod
-    def vars_in_cols(df: pd.DataFrame, list_vars: list, filename: Union[str, None] = None) -> None:
-        assert isinstance(df, pd.DataFrame) and isinstance(list_vars, list)
-        for var in list_vars:
-            if var not in df.columns:
-                if filename is None:
-                    raise VariableNotFoundError(f"Required variable {var} not found in columns {df.columns}")
-                raise VariableNotFoundError(f"Required variable {var} not found in file {filename}")
+    @property
+    def required_vars(self):
+        return [self.idvar, self.qcvar] + self.feature_names
 
 
 class Dataset(StudyData):
-    """
-    This class contains merged data from several studies.
-
-    ...
-
-    Attributes
-    ----------
-    studies_dir: str
-        Path to directory with subdirectories for all studies
-    study_filepaths: dict
-        Paths to the CSV files for each study that will be imported
-    df: pd.DataFrame
-        Dataframe containing merged data from all studies
-    """
 
     studies_dir = "/Users/joshua/Developer/civetqc/data/studies"
 
@@ -177,37 +143,20 @@ class Dataset(StudyData):
         )
     }
 
-    def __init__(self, cutoff_value: int, balanced: bool, list_features: Union[None, list]) -> None:
-        """
-        Parameters
-        ----------
-        cutoff_value: int
-            the cutoff value for a valid scan
-        balanced: bool
-            specify whether target classes should be balanced
-        list_features: None/list
-            list of features to include (if None, will include all)
-        """
+    def __init__(self, balanced: bool = False) -> None:
 
         self.df = None
         for key in self.study_filepaths:
             if self.df is None:
-                super().__init__(self.study_filepaths[key][0], self.study_filepaths[key][1], cutoff_value)
+                super().__init__(self.study_filepaths[key][0], self.study_filepaths[key][1])
             else:
                 study_data = StudyData(self.study_filepaths[key][0], self.study_filepaths[key][1])
                 self.df = pd.concat([self.df, study_data.df])
 
-        assert self.df[self.idvar].is_unique
-        assert self.all_in_range(self.qcvar, self.cutoff_value + 1)
-        self.vars_in_cols(self.df, self.required_all_vars)
+        self.check_required_vars()
+        self.check_ids_unique()
         self.df[self.idvar] = list(range(1, len(self.df[self.idvar]) + 1))
 
         if balanced:
             min_cls = self.df[self.qcvar].value_counts().min()
             self.df = self.df.groupby(self.qcvar).sample(n=min_cls).sort_values(by=self.idvar)
-
-        if list_features is not None:
-            self.vars_in_cols(self.df, list_features)
-            self.feature_names = list_features
-            self.required_all_vars = [self.idvar, self.qcvar] + self.feature_names
-            self.df = self.df[self.required_all_vars]

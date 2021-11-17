@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from .dataset import Dataset
-from sklearn.neighbors import KNeighborsClassifier
+import numpy as np
+import pickle
+from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-import pickle
-import numpy as np
+from .dataset import Dataset
 
 
 class DataPartition:
@@ -23,27 +22,6 @@ class DataPartition:
 
 
 class BaseModel(ABC):
-
-    """
-
-    Attributes
-    ----------
-    feature_names : list
-        List of the names of the features to be included in the model
-    target_names: list
-        List of names for the classes
-    features: np.ndarray
-        2D array of features included in the model
-    target: np.ndarray
-        1D array of targets
-    target_names: list
-        List of names for the classes
-    train: DataPartition
-        Training set
-    test: DataPartition
-        Testing set
-    
-    """
 
     target_names = ["Acceptable", "Unacceptable"]
 
@@ -72,16 +50,6 @@ class BaseModel(ABC):
         return self.model.predict(self.test.features)
 
 
-class KNeighborsModel(BaseModel):
-
-    def __init__(self, data: Dataset) -> None:
-        super().__init__(data)
-
-    @property
-    def model(self):
-        model = KNeighborsClassifier(n_neighbors=5)
-
-
 class RandomForestModel(BaseModel):
 
     def __init__(self, data: Dataset) -> None:
@@ -92,8 +60,3 @@ class RandomForestModel(BaseModel):
         model = RandomForestClassifier(n_estimators=100, random_state=0)
         model.fit(self.train.features, self.train.target)
         return model
-
-def main():
-    data = Dataset(cutoff_value=1, balanced=True, list_features=None)
-    forest = RandomForestModel(data)
-    forest.save("/Users/joshua/Developer/civetqc/data/models/forest.pickle")
