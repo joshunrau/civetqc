@@ -135,7 +135,7 @@ dmypy.json
 .idea/
 
 # Patient data
-data/
+/data/
 
 # jupyter
 .ipynb_checkpoints
