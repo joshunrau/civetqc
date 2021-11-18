@@ -11,7 +11,7 @@ setup(
     version="0.0.1",
     author="Joshua Unrau",
     author_email="joshua.unrau@mail.mcgill.ca",
-    description="Semi-Automated CIVET Quality Control",
+    description="CivetQC is a command-line utility for automated quality control of CIVET outputs.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     url="https://github.com/joshunrau/civetqc",
