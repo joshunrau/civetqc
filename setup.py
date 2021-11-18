@@ -26,7 +26,14 @@ setup(
     python_requires=">=3.8",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
+    
     scripts=["civetqc"],
     include_package_data=True,
-    package_data={"" : ["data/simulated_data/*.csv", "model/*.pkl"]}
-)
+    package_data={"" : ["data/simulated_data/*.csv", "model/*.pkl"]},
+    install_requires = [
+        "numpy>=1.21.3", 
+        "pandas>=1.3.4", 
+        "scikit_learn>=1.0.1",
+        "setuptools>=58.3.0"
+        ]
+    )
