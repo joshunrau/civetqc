@@ -19,3 +19,7 @@ Although the CIVET Cortical Surface Extraction Pipeline provides users with exte
     optional arguments:
     -h, --help  show this help message and exit
 
+
+## Example
+
+    civetqc /Users/joshua/Developer/civetqc/data/LAM/LAM_civet_data.csv /Users/joshua/Desktop

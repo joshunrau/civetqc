@@ -8,7 +8,7 @@ def get_long_description():
 
 setup(
     name="civetqc",
-    version="0.0.1",
+    version="0.0.2",
     author="Joshua Unrau",
     author_email="joshua.unrau@mail.mcgill.ca",
     description="CivetQC is a command-line utility for automated quality control of CIVET outputs.",
