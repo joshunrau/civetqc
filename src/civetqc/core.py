@@ -13,7 +13,7 @@ class UserArguments:
     def __init__(self, args: list) -> None:
         parser = argparse.ArgumentParser(prog="civetqc")
         parser.add_argument("path_csv", help="path to csv file outputted by CIVET")
-        parser.add_argument("output_dir", help="path to directory to output results in")
+        parser.add_argument("output_dir", help="path to directory where results should be outputted")
         self.args = parser.parse_args(args)
         self.path_csv, self.output_dir = self.args.path_csv, self.args.output_dir
 
