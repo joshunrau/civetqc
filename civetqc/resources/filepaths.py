@@ -1,6 +1,7 @@
 import os
 
 from pkg_resources import resource_filename
+
 from .. import __name__ as package_name
 
 

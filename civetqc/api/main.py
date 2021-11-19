@@ -1,7 +1,7 @@
 import os
 import sys
 
-from .helpers import process_arguments, load_saved_model, predict_qc
+from .helpers import process_arguments, load_saved_model
 from ..data.datasets import CIVETData
 
 

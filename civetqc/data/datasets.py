@@ -55,12 +55,12 @@ class CIVETData(BaseData):
     def __init__(self, path_csv: str) -> None:
         super().__init__(path_csv)
         self.features = self.df[self.feature_names].to_numpy()
-    
+
     def predict_qc(self, clf: BaseEstimator):
         if not is_classifier(clf):
             raise TypeError(f"Expected sklearn classifier object, not {type(clf)}")
         self.df["QC"] = clf.predict(self.features)
-        
+
     @property
     def required_vars(self):
         return [self.idvar] + self.feature_names

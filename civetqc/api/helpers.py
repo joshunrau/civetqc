@@ -2,13 +2,12 @@ import argparse
 import os
 import pickle
 
-from ..resources.filepaths import SAVED_MODEL
-
 from sklearn.base import BaseEstimator, is_classifier
+
+from ..resources.filepaths import SAVED_MODEL
 
 
 def process_arguments(args) -> tuple:
-
     parser = argparse.ArgumentParser(prog="civetqc")
     parser.add_argument("path_csv", help="path to csv file outputted by CIVET")
     parser.add_argument("output_dir", help="path to directory where results should be outputted")
@@ -18,7 +17,7 @@ def process_arguments(args) -> tuple:
         raise FileNotFoundError
     if not os.path.isdir(parsed_args.output_dir):
         raise NotADirectoryError
-    
+
     return parsed_args.path_csv, parsed_args.output_dir
 
 
@@ -28,8 +27,3 @@ def load_saved_model() -> BaseEstimator:
     if not is_classifier(clf):
         raise TypeError(f"Expected sklearn classifier object, not {type(clf)} ")
     return clf
-    
-
-
-
-
