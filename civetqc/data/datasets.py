@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -5,7 +6,25 @@ import pandas as pd
 from sklearn.base import BaseEstimator, is_classifier
 from sklearn.model_selection import train_test_split
 
-from .exceptions import VariableNotFoundError, DuplicateIdentifierError, DataFrameMergerError, NegativeQCRatingError
+
+class VariableNotFoundError(Exception):
+    """ raised when a required variable is not found in CSV file """
+    pass
+
+
+class DuplicateIdentifierError(ValueError):
+    """ raised when a value for the ID variable appears more than once """
+    pass
+
+
+class DataFrameMergerError(Exception):
+    """ raised when cannot merge dataframes on key var due to type """
+    pass
+
+
+class NegativeQCRatingError(ValueError):
+    """ raised when negative QC value is in CSV file """
+    pass
 
 
 class BaseData(ABC):
@@ -60,6 +79,11 @@ class CIVETData(BaseData):
         if not is_classifier(clf):
             raise TypeError(f"Expected sklearn classifier object, not {type(clf)}")
         self.df["QC"] = clf.predict(self.features)
+
+    def write_csv(self, output_dir):
+        filepath = os.path.join(output_dir, "civetqc.csv")
+        self.df.to_csv(filepath, index=False)
+        print(f"Output file: {filepath}")
 
     @property
     def required_vars(self):

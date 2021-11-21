@@ -1,4 +1,3 @@
-import os
 import sys
 
 from .helpers import process_arguments, load_saved_model
@@ -10,4 +9,4 @@ def main():
     saved_model = load_saved_model()
     user_data = CIVETData(path_csv)
     user_data.predict_qc(saved_model)
-    user_data.df.to_csv(os.path.join(output_dir, "civetqc.csv"), index=False)
+    user_data.write_csv(output_dir)

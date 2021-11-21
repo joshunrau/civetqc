@@ -87,6 +87,10 @@ class SimulatedQCData(SimulatedDataset):
     def simulated_data(self):
         return super().simulated_data[[self.idvar, self.qcvar]]
 
+    @simulated_data.setter
+    def simulated_data(self, value):
+        self.simulated_data = value
+
     def remove_qc_var(self):
         self.simulated_data = self.simulated_data.drop([self.qcvar], axis=1)
 
