@@ -12,6 +12,6 @@ install:
 	pip install .
 
 test:
-	python -m unittest discover tests
+	python -m unittest discover .
 
 clean-install: install clean
