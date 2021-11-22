@@ -126,7 +126,7 @@ class StudyData(CIVETData, QCData):
         if cutoff_value < 1:
             raise ValueError("Cutoff value must be greater than zero")
 
-        self.df[self.qcvar] = np.where(self.df[self.qcvar] < self.cutoff_value, 0, 1)
+        self.df[self.qcvar] = np.where(self.df[self.qcvar] < self.cutoff_value, 1, 0)
         assert all([x in range(self.cutoff_value + 1) for x in self.df[self.qcvar]])
 
     @property
@@ -178,7 +178,8 @@ class Dataset:
 
     target_names = ["Acceptable", "Unacceptable"]
 
-    def __init__(self, data: MergedDataset) -> None:
+    def __init__(self, study_paths: list, balanced: bool = False) -> None:
+        data = MergedDataset(study_paths, balanced)
         self.feature_names = data.feature_names
         self.features = data.df[data.feature_names].to_numpy()
         self.target = data.df[data.qcvar].to_numpy()
