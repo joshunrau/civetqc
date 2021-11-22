@@ -20,3 +20,7 @@ class TrainModel(Dataset):
     def save(self, filepath):
         with open(filepath, 'wb') as f:
             pickle.dump(self.clf, f)
+
+class Model(Dataset):
+    def __init__(self, study_paths: list, balanced: bool = False) -> None:
+        super().__init__(study_paths, balanced=balanced)
