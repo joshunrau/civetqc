@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import RandomOverSampler, SMOTE
 from sklearn.base import BaseEstimator, is_classifier
 from sklearn.model_selection import train_test_split
 
@@ -163,10 +163,14 @@ class MergedDataset(StudyData):
 class DataPartition:
     """ container for test and training sets """
 
-    def __init__(self, features: np.ndarray, target: np.ndarray) -> None:
+    def __init__(self, features: np.ndarray, target: np.ndarray, over_sample: bool = False) -> None:
         assert isinstance(features, np.ndarray) and isinstance(target, np.ndarray)
         assert features.ndim == 2 and target.ndim == 1
-        self.features, self.target = features, target
+        if over_sample:
+            ros = SMOTE(random_state=0)
+            self.features, self.target = ros.fit_resample(features, target)
+        else:
+            self.features, self.target = features, target
 
     def __str__(self) -> str:
         return "Target Class Counts\n" + '\n'.join(
@@ -185,9 +189,6 @@ class Dataset:
         self.features = data.df[data.feature_names].to_numpy()
         self.target = data.df[data.qcvar].to_numpy()
 
-        ros = RandomOverSampler(random_state=0)
-        self.features, self.target = ros.fit_resample(self.features, self.target)
-
-        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
-        self.train = DataPartition(x_train, y_train)
-        self.test = DataPartition(x_test, y_test)
+        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, test_size=.3, random_state=0)
+        self.train = DataPartition(x_train, y_train, over_sample=True)
+        self.test = DataPartition(x_test, y_test, over_sample=True)
