@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+from imblearn.over_sampling import RandomOverSampler
 from sklearn.base import BaseEstimator, is_classifier
 from sklearn.model_selection import train_test_split
 
@@ -178,11 +179,15 @@ class Dataset:
 
     target_names = ["Acceptable", "Unacceptable"]
 
-    def __init__(self, study_paths: list, balanced: bool = False) -> None:
-        data = MergedDataset(study_paths, balanced)
+    def __init__(self, study_paths: list) -> None:
+        data = MergedDataset(study_paths)
         self.feature_names = data.feature_names
         self.features = data.df[data.feature_names].to_numpy()
         self.target = data.df[data.qcvar].to_numpy()
+
+        ros = RandomOverSampler(random_state=0)
+        self.features, self.target = ros.fit_resample(self.features, self.target)
+
         x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
         self.train = DataPartition(x_train, y_train)
         self.test = DataPartition(x_test, y_test)
