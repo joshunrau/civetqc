@@ -3,9 +3,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from imblearn.over_sampling import RandomOverSampler, SMOTE
 from sklearn.base import BaseEstimator, is_classifier
-from sklearn.model_selection import train_test_split
 
 
 class VariableNotFoundError(Exception):
@@ -29,7 +27,6 @@ class NegativeQCRatingError(ValueError):
 
 
 class BaseData(ABC):
-    """ inherited by all data classes """
 
     idvar = "ID"
 
@@ -105,7 +102,7 @@ class QCData(BaseData):
 
 
 class StudyData(CIVETData, QCData):
-    """ encapsulates data from one CIVET output and one QC ratings file """
+    """ data from one CIVET output and one QC ratings file """
 
     def __init__(self, civet_csv: str, qc_csv: str, cutoff_value: int = 1) -> None:
 
@@ -135,7 +132,8 @@ class StudyData(CIVETData, QCData):
         return [self.idvar, self.qcvar] + self.feature_names
 
 
-class MergedDataset(StudyData):
+class MergedData(StudyData):
+    """ data from multiple studies merged together """
 
     def __init__(self, study_paths: list, balanced: bool = False) -> None:
 
@@ -160,35 +158,46 @@ class MergedDataset(StudyData):
         return super().required_vars
 
 
-class DataPartition:
-    """ container for test and training sets """
+class UnprocessedDataset:
 
-    def __init__(self, features: np.ndarray, target: np.ndarray, over_sample: bool = False) -> None:
-        assert isinstance(features, np.ndarray) and isinstance(target, np.ndarray)
-        assert features.ndim == 2 and target.ndim == 1
-        if over_sample:
-            ros = SMOTE(random_state=0)
-            self.features, self.target = ros.fit_resample(features, target)
-        else:
-            self.features, self.target = features, target
+    studies_dir = "/Users/joshua/Developer/civetqc/data"
 
-    def __str__(self) -> str:
-        return "Target Class Counts\n" + '\n'.join(
-            f"{': '.join([str(y) for y in list(x)])} ({round(x[-1] / len(self.target) * 100, 2)}%)" for x in
-            np.array(np.unique(self.target, return_counts=True)).T)
-
-
-class Dataset:
-    """ final format of dataset to build model """
+    study_paths = [
+        (
+            os.path.join(studies_dir, "FEP", "FEP_civet_data.csv"), 
+            os.path.join(studies_dir, "FEP", "FEP_QC.csv")
+        ),
+        (
+            os.path.join(studies_dir, "LAM", "LAM_civet_data.csv"), 
+            os.path.join(studies_dir, "LAM", "LAM_QC.csv")
+        ),
+        (
+            os.path.join(studies_dir, "INSIGHT", "INSIGHT_civet_data.csv"), 
+            os.path.join(studies_dir, "INSIGHT", "INSIGHT_QC.csv")
+        ),
+        (
+            os.path.join(studies_dir, "TOPSY", "TOPSY_civet_data.csv"), 
+            os.path.join(studies_dir, "TOPSY", "TOPSY_QC.csv")
+        )
+    ]
 
     target_names = ["Acceptable", "Unacceptable"]
-
-    def __init__(self, study_paths: list) -> None:
-        data = MergedDataset(study_paths)
+        
+    def __init__(self) -> None:
+        
+        data = MergedData(self.study_paths)
         self.feature_names = data.feature_names
         self.features = data.df[data.feature_names].to_numpy()
         self.target = data.df[data.qcvar].to_numpy()
-
-        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, test_size=.3, random_state=0)
-        self.train = DataPartition(x_train, y_train, over_sample=True)
-        self.test = DataPartition(x_test, y_test, over_sample=True)
+        self.verify_integrity()
+        
+    def verify_integrity(self):
+        assert self.target.ndim == 1 and self.features.ndim == 2
+        assert len(self.target) == self.features.shape[0]
+        assert len(self.feature_names) == self.features.shape[1]
+    
+    @property
+    def df(self) -> pd.DataFrame:
+        df = pd.DataFrame(self.features, columns=self.feature_names)
+        df["QC"] = np.where(self.target == 0, self.target_names[0], self.target_names[1])
+        return df

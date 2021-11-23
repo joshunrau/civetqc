@@ -1,7 +1,7 @@
 import sys
 
 from .helpers import process_arguments, load_saved_model
-from ..data.datasets import CIVETData
+from ..data.base import CIVETData
 
 
 def main():
