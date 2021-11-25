@@ -27,7 +27,7 @@ class NegativeQCRatingError(ValueError):
 
 
 class BaseData(ABC):
-
+    
     idvar = "ID"
 
     def __init__(self, path_csv: str) -> None:
@@ -156,48 +156,3 @@ class MergedData(StudyData):
     @property
     def required_vars(self):
         return super().required_vars
-
-
-class UnprocessedDataset:
-
-    studies_dir = "/Users/joshua/Developer/civetqc/data"
-
-    study_paths = [
-        (
-            os.path.join(studies_dir, "FEP", "FEP_civet_data.csv"), 
-            os.path.join(studies_dir, "FEP", "FEP_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "LAM", "LAM_civet_data.csv"), 
-            os.path.join(studies_dir, "LAM", "LAM_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "INSIGHT", "INSIGHT_civet_data.csv"), 
-            os.path.join(studies_dir, "INSIGHT", "INSIGHT_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "TOPSY", "TOPSY_civet_data.csv"), 
-            os.path.join(studies_dir, "TOPSY", "TOPSY_QC.csv")
-        )
-    ]
-
-    target_names = ["Acceptable", "Unacceptable"]
-        
-    def __init__(self) -> None:
-        
-        data = MergedData(self.study_paths)
-        self.feature_names = data.feature_names
-        self.features = data.df[data.feature_names].to_numpy()
-        self.target = data.df[data.qcvar].to_numpy()
-        self.verify_integrity()
-        
-    def verify_integrity(self):
-        assert self.target.ndim == 1 and self.features.ndim == 2
-        assert len(self.target) == self.features.shape[0]
-        assert len(self.feature_names) == self.features.shape[1]
-    
-    @property
-    def df(self) -> pd.DataFrame:
-        df = pd.DataFrame(self.features, columns=self.feature_names)
-        df["QC"] = np.where(self.target == 0, self.target_names[0], self.target_names[1])
-        return df
