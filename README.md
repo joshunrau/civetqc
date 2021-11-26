@@ -2,16 +2,16 @@
 
 ## About
 
-Although the CIVET Cortical Surface Extraction Pipeline provides users with extensive data for quality control purposes, reviewing these data manually is time consuming and impractical when dealing with extremely large datasets. CIVETQC is a fully automated quality control pipeline for CIVET outputs based on the random forest algorithm. Using data from our lab (N=1087), the algorithm was trained to classify CIVET outputs as either acceptable (0) or unacceptable (1). CIVETQC is still in development, see below for a summary of model performance.
+Although the CIVET Cortical Surface Extraction Pipeline provides users with extensive data for quality control purposes, reviewing these data manually is time consuming and impractical when dealing with extremely large datasets. CIVETQC is a fully automated quality control pipeline for CIVET outputs based on the scikit-learn. Using data from our lab (N=1087), the algorithm was trained to classify CIVET outputs as either acceptable (0) or unacceptable (1). CIVETQC is still in development, see below for a summary of model performance.
 
-                precision    recall  f1-score   support
+                  precision    recall  f1-score   support
 
-            0       0.77      0.98      0.86       314
-            1       0.97      0.70      0.82       314
+            0          1.00      0.94      0.97       260
+            1          0.41      0.92      0.56        12
 
-    accuracy                            0.84       628
-    macro avg       0.87      0.84      0.84       628
-    weighted avg    0.87      0.84      0.84       628
+    accuracy                               0.94       272
+    macro avg          0.70      0.93      0.77       272
+    weighted avg       0.97      0.94      0.95       272
 
 ## Installation
 
