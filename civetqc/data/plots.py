@@ -13,7 +13,7 @@ def get_x_label(dataset: Dataset, i: int) -> str:
 
 
 def plot_distribution(dataset: Dataset) -> None:
-    fig, axes = plt.subplots(15, 2, figsize=(20, 50))
+    fig, axes = plt.subplots(15, 2, figsize=(20, 70))
     ax = axes.ravel()
 
     for i in range(29):
@@ -21,3 +21,4 @@ def plot_distribution(dataset: Dataset) -> None:
         ax[i].set_xlabel(get_x_label(dataset, i))
     
     fig.tight_layout(h_pad=2)
+    fig.set_dpi(300)
