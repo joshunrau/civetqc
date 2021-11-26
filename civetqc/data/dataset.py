@@ -1,8 +1,12 @@
 import os
-
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
+
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 from .base import MergedData
 
@@ -39,29 +43,33 @@ class Dataset:
         self.feature_names = data.feature_names
         self.features = data.df[data.feature_names].to_numpy()
         self.target = data.df[data.qcvar].to_numpy()
-        
-        self.features_by_target = {
+        self.verify_integrity()
+    
+    @property
+    def features_by_target(self):
+        return {
             self.target_names[0] : self.features[self.target == 0],
             self.target_names[1] : self.features[self.target == 1]
         }
-        
-        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
 
-        self.train = {
-            "features": x_train,
-            "target": y_train
-        }
+    @property
+    def train(self):
+        x_train, _, y_train, _ = train_test_split(self.features, self.target, random_state=0)
+        return {"features": x_train, "target": y_train}
 
-        self.test = {
-            "features": x_test,
-            "target": y_test
-        }
+    @property
+    def test(self):
+        _, x_test, _, y_test = train_test_split(self.features, self.target, random_state=0)
+        return {"features": x_test, "target": y_test}
 
-        self.means = self.get_statistic_by_target(np.mean)
-        self.stds = self.get_statistic_by_target(np.std)
-
-        self.verify_integrity()
-        
+    @property
+    def means(self):
+        return self.get_statistic_by_target(np.mean)
+    
+    @property
+    def stds(self):
+        return self.get_statistic_by_target(np.std)
+    
     def __str__(self) -> str:
 
         return f"\n{'-' * 79}\n".join([
@@ -112,3 +120,30 @@ class Dataset:
     def over_sample(self):
         est = SMOTE(random_state=0)
         self.train["features"], self.train["target"] = est.fit_resample(self.train["features"], self.train["target"])
+        self.features = np.vstack([self.train["features"], self.test["features"] ])
+    
+    def apply_standard_scaler(self):
+        scaler = StandardScaler()
+        scaler.fit(self.features)
+        self.features = scaler.transform(self.features)
+    
+    def plot_distribution(self) -> None:
+
+        def get_x_label(self, i: int) -> str:
+            return "\n".join([
+                self.feature_names[i],
+                "Mean: " + ", ".join([f"{x}: {self.means[self.feature_names[i]][x]}" for x in self.means[self.feature_names[i]]]),
+                "SD: " + ", ".join([f"{x}: {self.stds[self.feature_names[i]][x]}" for x in self.stds[self.feature_names[i]]])
+            ])
+        
+        plot_data = pd.DataFrame(np.hstack([self.features, self.target[:, np.newaxis]]), columns = self.feature_names + ["QC"])
+
+        fig, axes = plt.subplots(15, 2, figsize=(20, 70))
+        ax = axes.ravel()
+
+        for i in range(29):
+            sns.kdeplot(data=plot_data, x=self.feature_names[i], hue="QC", fill=True, common_norm=False, bw_adjust=1, alpha=.5, ax=ax[i])
+            ax[i].set_xlabel(get_x_label(self, i))
+        
+        fig.tight_layout(h_pad=2)
+        fig.set_dpi(300)
