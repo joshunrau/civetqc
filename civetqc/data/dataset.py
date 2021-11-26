@@ -35,6 +35,7 @@ class Dataset:
     def __init__(self) -> None:
 
         data = MergedData(self.study_paths)
+        self.df = data.df
         self.feature_names = data.feature_names
         self.features = data.df[data.feature_names].to_numpy()
         self.target = data.df[data.qcvar].to_numpy()
@@ -55,6 +56,9 @@ class Dataset:
             "features": x_test,
             "target": y_test
         }
+
+        self.means = self.get_statistic_by_target(np.mean)
+        self.stds = self.get_statistic_by_target(np.std)
 
         self.verify_integrity()
         
@@ -97,13 +101,11 @@ class Dataset:
         return formatted
     
     def get_summary_stats(self):
-        mean = self.get_statistic_by_target(np.mean)
-        std = self.get_statistic_by_target(np.std)
         summary_stats = ["Mean and Standard Deviation of Features by QC Rating\n"]
         for feature in self.feature_names:
             feature_stats = [feature]
             for name in self.target_names:
-                feature_stats.append(f"{name}: Mean={mean[feature][name]:.2f}, SD={std[feature][name]:.2f}")
+                feature_stats.append(f"{name}: Mean={self.means[feature][name]:.2f}, SD={self.stds[feature][name]:.2f}")
             summary_stats.append("\n".join(feature_stats) + "\n")
         return "\n".join(summary_stats)
 

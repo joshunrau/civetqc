@@ -143,7 +143,7 @@ class MergedData(StudyData):
                 super().__init__(study[0], study[1])
             else:
                 study_data = StudyData(study[0], study[1])
-                self.df = pd.concat([self.df, study_data.df])
+                self.df = pd.concat([self.df, study_data.df], ignore_index=True)
 
         self.check_required_vars()
         self.check_ids_unique()
