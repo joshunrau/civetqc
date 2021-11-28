@@ -9,14 +9,12 @@ from sklearn.manifold import Isomap
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from .base import MergedData
-
+from .base import BaseData, StudyData, MergedData
+from .studies import Studies
 
 class Dataset:
 
-    def __init__(self):
-
-        data = MergedData()
+    def __init__(self, data: BaseData = MergedData()):
         self.features = data.df[data.feature_names].to_numpy()
         self.feature_names = data.feature_names
         self.target = data.df[data.qcvar].to_numpy()
@@ -58,19 +56,12 @@ class Dataset:
 
     def get_target_counts(self):
 
-        target_counts = {
-            "All": [x.tolist() for x in np.unique(self.target, return_counts=True)],
-            "Train": [x.tolist() for x in np.unique(self.train['target'], return_counts=True)],
-            "Test": [x.tolist() for x in np.unique(self.test['target'], return_counts=True)],
-        }
+        target_counts = [x.tolist() for x in np.unique(self.target, return_counts=True)]
 
-        output_value = ["Target Counts:"]
-        for key in target_counts:
-            if len(target_counts[key][0]) == len(self.target_names):
-                output_value.append(f"\n{key}\n" + "\n".join(
-                    [f"{name}: {value}" for name, value in zip(self.target_names, target_counts[key][1])]))
-            else:
-                raise ValueError("Length of target names does not equal number of unique values")
+        output_value = [f"Target Counts"] + [f"{name}: {value}" for name, value in zip(self.target_names, target_counts[1])]
+
+        if len(target_counts[0]) != len(self.target_names):
+            raise ValueError(f"Length of target names does not equal number of unique values")
 
         return "\n".join(output_value) + "\n"
 
@@ -150,3 +141,11 @@ class Dataset:
 
         fig.tight_layout(h_pad=2)
         fig.set_dpi(300)
+
+    @classmethod
+    def datasets_by_study(cls):
+        studies = {}
+        for name, filepaths in Studies.filepaths.items():
+            studies[name] = cls(data = StudyData(filepaths[0], filepaths[1]))
+        return studies
+

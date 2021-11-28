@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, is_classifier
 
+from .studies import Studies
+
 
 class VariableNotFoundError(Exception):
     """ raised when a required variable is not found in CSV file """
@@ -137,31 +139,10 @@ class StudyData(CIVETData, QCData):
 class MergedData(StudyData):
     """ data from multiple studies merged together """
 
-    studies_dir = "/Users/joshua/Developer/civetqc/data"
-
-    study_paths = [
-        (
-            os.path.join(studies_dir, "FEP", "FEP_civet_data.csv"),
-            os.path.join(studies_dir, "FEP", "FEP_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "LAM", "LAM_civet_data.csv"),
-            os.path.join(studies_dir, "LAM", "LAM_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "INSIGHT", "INSIGHT_civet_data.csv"),
-            os.path.join(studies_dir, "INSIGHT", "INSIGHT_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "TOPSY", "TOPSY_civet_data.csv"),
-            os.path.join(studies_dir, "TOPSY", "TOPSY_QC.csv")
-        )
-    ]
-
     def __init__(self, balanced: bool = False) -> None:
 
         self.df = None
-        for study in self.study_paths:
+        for study in Studies.filepaths.values():
             if self.df is None:
                 super().__init__(study[0], study[1])
             else:
