@@ -1,4 +1,3 @@
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -6,6 +5,7 @@ import seaborn as sns
 
 from imblearn.over_sampling import SMOTE
 from sklearn.decomposition import PCA
+from sklearn.manifold import Isomap
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -13,89 +13,48 @@ from .base import MergedData
 
 
 class Dataset:
-    
-    studies_dir = "/Users/joshua/Developer/civetqc/data"
 
-    study_paths = [
-        (
-            os.path.join(studies_dir, "FEP", "FEP_civet_data.csv"),
-            os.path.join(studies_dir, "FEP", "FEP_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "LAM", "LAM_civet_data.csv"),
-            os.path.join(studies_dir, "LAM", "LAM_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "INSIGHT", "INSIGHT_civet_data.csv"),
-            os.path.join(studies_dir, "INSIGHT", "INSIGHT_QC.csv")
-        ),
-        (
-            os.path.join(studies_dir, "TOPSY", "TOPSY_civet_data.csv"),
-            os.path.join(studies_dir, "TOPSY", "TOPSY_QC.csv")
-        )
-    ]
-    
-    target_names = ["Acceptable", "Unacceptable"]
+    def __init__(self):
 
-    def __init__(self, scale: bool=False, pca: bool=False, over_sample: bool=False) -> None:
-
-        data = MergedData(self.study_paths)
-        self.df = data.df
-        self.feature_names = data.feature_names
+        data = MergedData()
         self.features = data.df[data.feature_names].to_numpy()
+        self.feature_names = data.feature_names
         self.target = data.df[data.qcvar].to_numpy()
+        self.target_names = data.target_names
 
-        if scale:
-            scaler = StandardScaler()
-            scaler.fit(self.features)
-            self.features = scaler.transform(self.features)
+    @property
+    def n_features(self):
+        return self.features.shape[1]
 
-        x_train, x_test, y_train, y_test = train_test_split(self.features, self.target, random_state=0)
+    @property
+    def n_samples(self):
+        return self.target.shape[0]
 
-        if pca:
-            pca = PCA(n_components = .99, whiten=True, random_state=0)
-            pca.fit(x_train)
-            x_train, x_test = pca.transform(x_train), pca.transform(x_test)
-            self.features = np.vstack([x_train, x_test])
-            self.feature_names = [f"pc{x}" for x in range(pca.n_components_)]
-        
-        self.train = {
+    @property
+    def means(self):
+        return self.get_statistic_by_target(np.mean)
+
+    @property
+    def stds(self):
+        return self.get_statistic_by_target(np.std)
+
+    @property
+    def train(self):
+        x_train, _, y_train, _ = train_test_split(self.features, self.target, random_state=0)
+        return {
             "features": x_train,
             "target": y_train
         }
 
-        self.test = {
+    @property
+    def test(self):
+        _, x_test, _, y_test = train_test_split(self.features, self.target, random_state=0)
+        return {
             "features": x_test,
             "target": y_test
         }
 
-        if over_sample:
-            est = SMOTE(random_state=0)
-            self.train["features"], self.train["target"] = est.fit_resample(self.train["features"], self.train["target"])
-            self.features = np.vstack([self.train["features"], self.test["features"]])
-            self.target = np.hstack([self.train["target"], self.test["target"]])
-        
-        self.features_by_target = {
-            self.target_names[0] : self.features[self.target == 0],
-            self.target_names[1] : self.features[self.target == 1]
-        }
-
-        self.means = self.get_statistic_by_target(np.mean)
-        self.stds = self.get_statistic_by_target(np.std)
-
-        self.verify_integrity()
-    
-    def __str__(self) -> str:
-
-        return f"\n{'-' * 79}\n".join([
-            self.get_target_counts(),
-            self.get_summary_stats()
-        ])
-    
-    def verify_integrity(self):
-        assert self.target.ndim == 1 and self.features.ndim == 2
-        assert len(self.target) == self.features.shape[0]
-        assert len(self.feature_names) == self.features.shape[1]
+    # Summary statistics
 
     def get_target_counts(self):
 
@@ -114,43 +73,80 @@ class Dataset:
                 raise ValueError("Length of target names does not equal number of unique values")
 
         return "\n".join(output_value) + "\n"
-    
+
     def get_statistic_by_target(self, f):
-        raw = {name: f(self.features_by_target[name], axis=0).round(3) for name in self.target_names}
+
+        features_by_target = {
+            self.target_names[0]: self.features[self.target == 0],
+            self.target_names[1]: self.features[self.target == 1]
+        }
+
+        raw = {name: f(features_by_target[name], axis=0).round(3) for name in self.target_names}
         formatted = {feature: {} for feature in self.feature_names}
         for i in range(len(self.feature_names)):
             for target in self.target_names:
                 formatted[self.feature_names[i]][target] = raw[target][i]
         return formatted
-    
-    def get_summary_stats(self):
-        summary_stats = ["Mean and Standard Deviation of Features by QC Rating\n"]
-        for feature in self.feature_names:
-            feature_stats = [feature]
-            for name in self.target_names:
-                feature_stats.append(f"{name}: Mean={self.means[feature][name]:.2f}, SD={self.stds[feature][name]:.2f}")
-            summary_stats.append("\n".join(feature_stats) + "\n")
-        return "\n".join(summary_stats)
+
+    # Balancing
+    def apply_smote(self):
+        model = SMOTE(random_state=0)
+        self.features, self.target = model.fit_resample(self.features, self.target)
+
+    # Preprocessing
+    def apply_std_scaler(self, **kwargs):
+        model = StandardScaler(**kwargs)
+        model.fit(self.features)
+        self.features = model.transform(self.features)
+
+    # Dimensionality reduction
+
+    def apply_pca(self, **kwargs):
+        if kwargs == {}:
+            kwargs = {'n_components': 2, 'random_state': 0}
+        model = PCA(**kwargs)
+        model.fit(self.features)
+        self.features = model.transform(self.features)
+        self.feature_names = np.array([f"PCA{x}" for x in range(1, model.n_components_ + 1)])
+
+    def apply_isomap(self, **kwargs):
+        if kwargs == {}:
+            kwargs = {'n_components': 2}
+        model = Isomap(**kwargs)
+        model.fit(self.features)
+        self.features = model.transform(self.features)
+        self.feature_names = np.array([f"ISO{x}" for x in range(1, model.n_components + 1)])
+
+    # Plots
+
+    def scatterplot(self):
+        if self.n_features != 2:
+            raise ValueError(f"Number of features must be 2, not {self.n_features}")
+        return sns.scatterplot(data=self.features)
 
     def plot_distribution(self) -> None:
 
-        def get_x_label(self, i: int) -> str:
-            return "\n".join([
-                self.feature_names[i],
-                "Mean: " + ", ".join([f"{x}: {self.means[self.feature_names[i]][x]}" for x in self.means[self.feature_names[i]]]),
-                "SD: " + ", ".join([f"{x}: {self.stds[self.feature_names[i]][x]}" for x in self.stds[self.feature_names[i]]])
-            ])
-        
-        plot_data = pd.DataFrame(np.hstack([self.features, self.target[:, np.newaxis]]), columns = self.feature_names + ["QC"])
+        plot_data = pd.DataFrame(np.hstack([self.features, self.target[:, np.newaxis]]),
+                                 columns=self.feature_names.tolist() + ["QC"])
 
         rows_needed = len(self.feature_names) // 2 + len(self.feature_names) % 2
 
-        fig, axes = plt.subplots(rows_needed, 2, figsize=(20, 70))
+        fig, axes = plt.subplots(rows_needed, 2, figsize=(8, rows_needed * 2))
         ax = axes.ravel()
 
-        for i in range(rows_needed * 2):
-            sns.kdeplot(data=plot_data, x=self.feature_names[i], hue="QC", fill=True, common_norm=False, bw_adjust=1, alpha=.5, ax=ax[i])
-            ax[i].set_xlabel(get_x_label(self, i))
-        
+        for i in range(len(self.feature_names)):
+            sns.kdeplot(data=plot_data, x=self.feature_names[i], hue="QC", fill=True, common_norm=False, bw_adjust=1,
+                        alpha=.5, ax=ax[i])
+
+            x_label = "\n".join([
+                self.feature_names[i],
+                "Mean: " + ", ".join(
+                    [f"{x}: {self.means[self.feature_names[i]][x]}" for x in self.means[self.feature_names[i]]]),
+                "SD: " + ", ".join(
+                    [f"{x}: {self.stds[self.feature_names[i]][x]}" for x in self.stds[self.feature_names[i]]])
+            ])
+
+            ax[i].set_xlabel(x_label)
+
         fig.tight_layout(h_pad=2)
         fig.set_dpi(300)

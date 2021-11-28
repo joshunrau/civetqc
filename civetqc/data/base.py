@@ -27,7 +27,6 @@ class NegativeQCRatingError(ValueError):
 
 
 class BaseData(ABC):
-    
     idvar = "ID"
 
     def __init__(self, path_csv: str) -> None:
@@ -60,14 +59,14 @@ class BaseData(ABC):
 class CIVETData(BaseData):
     """ data from CIVET output file """
 
-    feature_names = [
+    feature_names = np.array([
         "MASK_ERROR", "WM_PERCENT", "GM_PERCENT", "CSF_PERCENT", "SC_PERCENT",
         "BRAIN_VOL", "CEREBRUM_VOL", "CORTICAL_GM", "WHITE_VOL", "SUBGM_VOL",
         "SC_VOL", "CSF_VENT_VOL", "LEFT_WM_AREA", "LEFT_MID_AREA", "LEFT_GM_AREA",
         "RIGHT_WM_AREA", "RIGHT_MID_AREA", "RIGHT_GM_AREA", "GI_LEFT", "GI_RIGHT",
         "LEFT_INTER", "RIGHT_INTER", "LEFT_SURF_SURF", "RIGHT_SURF_SURF", "LAPLACIAN_MIN",
         "LAPLACIAN_MAX", "LAPLACIAN_MEAN", "GRAY_LEFT_RES", "GRAY_RIGHT_RES"
-    ]
+    ])
 
     def __init__(self, path_csv: str) -> None:
         super().__init__(path_csv)
@@ -85,13 +84,15 @@ class CIVETData(BaseData):
 
     @property
     def required_vars(self):
-        return [self.idvar] + self.feature_names
+        # noinspection PyTypeChecker
+        return [self.idvar] + self.feature_names.tolist()
 
 
 class QCData(BaseData):
     """ data from QC ratings file """
 
     qcvar = "QC"
+    target_names = np.array(["Acceptable", "Unacceptable"])
 
     def __init__(self, path_csv: str) -> None:
         super().__init__(path_csv)
@@ -129,16 +130,38 @@ class StudyData(CIVETData, QCData):
 
     @property
     def required_vars(self):
-        return [self.idvar, self.qcvar] + self.feature_names
+        # noinspection PyTypeChecker
+        return [self.idvar, self.qcvar] + self.feature_names.tolist()
 
 
 class MergedData(StudyData):
     """ data from multiple studies merged together """
 
-    def __init__(self, study_paths: list, balanced: bool = False) -> None:
+    studies_dir = "/Users/joshua/Developer/civetqc/data"
+
+    study_paths = [
+        (
+            os.path.join(studies_dir, "FEP", "FEP_civet_data.csv"),
+            os.path.join(studies_dir, "FEP", "FEP_QC.csv")
+        ),
+        (
+            os.path.join(studies_dir, "LAM", "LAM_civet_data.csv"),
+            os.path.join(studies_dir, "LAM", "LAM_QC.csv")
+        ),
+        (
+            os.path.join(studies_dir, "INSIGHT", "INSIGHT_civet_data.csv"),
+            os.path.join(studies_dir, "INSIGHT", "INSIGHT_QC.csv")
+        ),
+        (
+            os.path.join(studies_dir, "TOPSY", "TOPSY_civet_data.csv"),
+            os.path.join(studies_dir, "TOPSY", "TOPSY_QC.csv")
+        )
+    ]
+
+    def __init__(self, balanced: bool = False) -> None:
 
         self.df = None
-        for study in study_paths:
+        for study in self.study_paths:
             if self.df is None:
                 super().__init__(study[0], study[1])
             else:
