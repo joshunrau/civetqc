@@ -149,9 +149,9 @@ class MergedData(StudyData):
         self.df = None
         for name, study in Studies.filepaths.items():
             if self.df is None:
-                super().__init__(study[0], study[1], Studies.ids[name])
+                super().__init__(study[0], study[1], name)
             else:
-                study_data = StudyData(study[0], study[1], Studies.ids[name])
+                study_data = StudyData(study[0], study[1], name)
                 self.df = pd.concat([self.df, study_data.df], ignore_index=True)
 
         self.check_required_vars()

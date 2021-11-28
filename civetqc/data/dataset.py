@@ -9,6 +9,7 @@ from pathlib import Path
 
 from imblearn.over_sampling import SMOTE
 from sklearn.decomposition import PCA
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.manifold import Isomap
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -21,8 +22,10 @@ from ..utils.images import concatenate_images
 class Dataset:
 
     def __init__(self, data: BaseData = MergedData()):
-        self.features = data.df[data.feature_names].to_numpy()
-        self.feature_names = data.feature_names
+        features_dict = data.df[data.feature_names].T.to_dict().values()
+        vec = DictVectorizer(sparse=False)
+        self.features = vec.fit_transform(features_dict)
+        self.feature_names = vec.get_feature_names_out()
         self.target = data.df[data.qcvar].to_numpy()
         self.target_names = data.target_names
 
