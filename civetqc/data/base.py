@@ -107,19 +107,24 @@ class QCData(BaseData):
 class StudyData(CIVETData, QCData):
     """ data from one CIVET output and one QC ratings file """
 
-    def __init__(self, civet_csv: str, qc_csv: str, cutoff_value: int = 1) -> None:
+    feature_names = np.append(CIVETData.feature_names, "STUDY_ID")
+
+    def __init__(self, civet_csv: str, qc_csv: str, study_id: int, cutoff_value: int = 1) -> None:
 
         self.civet_data = CIVETData(civet_csv)
         self.qc_data = QCData(qc_csv)
+        self.study_id = study_id
 
         try:
             self.df = pd.merge(self.civet_data.df, self.qc_data.df, on=self.idvar).dropna()
         except Exception as err:
             raise DataFrameMergerError(f"Error merging data from files '{civet_csv}' and '{qc_csv}'") from err
-
+        
+        self.df["STUDY_ID"] = study_id
         self.df = self.df[self.required_vars]
         self.df[self.qcvar] = self.df[self.qcvar].apply(pd.to_numeric, errors='coerce')
-
+        self.df[self.study_id] = study_id
+        
         if not all(self.df[self.qcvar] >= 0):
             raise NegativeQCRatingError(f"All QC ratings in file {qc_csv} must greater than zero")
 
@@ -142,11 +147,11 @@ class MergedData(StudyData):
     def __init__(self, balanced: bool = False) -> None:
 
         self.df = None
-        for study in Studies.filepaths.values():
+        for name, study in Studies.filepaths.items():
             if self.df is None:
-                super().__init__(study[0], study[1])
+                super().__init__(study[0], study[1], Studies.ids[name])
             else:
-                study_data = StudyData(study[0], study[1])
+                study_data = StudyData(study[0], study[1], Studies.ids[name])
                 self.df = pd.concat([self.df, study_data.df], ignore_index=True)
 
         self.check_required_vars()
