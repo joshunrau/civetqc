@@ -1,7 +1,11 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
+from pathlib import Path
 
 from imblearn.over_sampling import SMOTE
 from sklearn.decomposition import PCA
@@ -11,6 +15,8 @@ from sklearn.preprocessing import StandardScaler
 
 from .base import BaseData, StudyData, MergedData
 from .studies import Studies
+from ..utils.images import concatenate_images
+
 
 class Dataset:
 
@@ -51,6 +57,13 @@ class Dataset:
             "features": x_test,
             "target": y_test
         }
+    
+    @property
+    def df(self):
+        return pd.DataFrame(
+            np.hstack([self.features, self.target[:, np.newaxis]]),
+            columns=self.feature_names.tolist() + ["QC"]
+            )
 
     # Summary statistics
 
@@ -116,19 +129,12 @@ class Dataset:
         return sns.scatterplot(data=self.features)
 
     def plot_distribution(self) -> None:
-
-        plot_data = pd.DataFrame(np.hstack([self.features, self.target[:, np.newaxis]]),
-                                 columns=self.feature_names.tolist() + ["QC"])
-
-        rows_needed = len(self.feature_names) // 2 + len(self.feature_names) % 2
-
-        fig, axes = plt.subplots(rows_needed, 2, figsize=(8, rows_needed * 2))
-        ax = axes.ravel()
+        
+        fig, ax = plt.subplots(self.n_features, figsize=(10, self.n_features*3))
 
         for i in range(len(self.feature_names)):
-            sns.kdeplot(data=plot_data, x=self.feature_names[i], hue="QC", fill=True, common_norm=False, bw_adjust=1,
-                        alpha=.5, ax=ax[i])
-
+            sns.kdeplot(data=self.df, x=self.feature_names[i], hue="QC", fill=True, 
+                        common_norm=False, bw_adjust=1, alpha=.5, ax=ax[i])
             x_label = "\n".join([
                 self.feature_names[i],
                 "Mean: " + ", ".join(
@@ -140,12 +146,23 @@ class Dataset:
             ax[i].set_xlabel(x_label)
 
         fig.tight_layout(h_pad=2)
-        fig.set_dpi(300)
+        fig.set_dpi(150)
 
-    @classmethod
-    def datasets_by_study(cls):
-        studies = {}
+
+class StudyDatasets:
+
+    def __init__(self) -> None:
+        self.studies = {}
         for name, filepaths in Studies.filepaths.items():
-            studies[name] = cls(data = StudyData(filepaths[0], filepaths[1]))
-        return studies
-
+            self.studies[name] = Dataset(data = StudyData(filepaths[0], filepaths[1]))
+    
+    def plot_distributions(self) -> None:
+        output_files = []
+        for name, dataset in self.studies.items():
+            dataset.plot_distribution()
+            output_files.append(os.path.join(Path.home(), f"{name}_DIST.jpg"))
+            plt.savefig(output_files[-1])
+        
+        concatenate_images(output_files, os.path.join(Path.home(), "study_distributions.jpg"))
+        [os.remove(x) for x in output_files]
+        

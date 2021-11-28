@@ -2,6 +2,7 @@ import os
 
 
 class Studies:
+
     names = ["FEP", "LAM", "INSIGHT", "TOPSY"]
     dir_path = "/Users/joshua/Developer/civetqc/data"
     filepaths = {}
