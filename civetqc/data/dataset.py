@@ -47,7 +47,11 @@ class Dataset:
 
     @property
     def train(self):
+
         x_train, _, y_train, _ = train_test_split(self.features, self.target, random_state=0)
+        model = SMOTE(random_state=0)
+        x_train, y_train = model.fit_resample(x_train, y_train)
+        
         return {
             "features": x_train,
             "target": y_train
@@ -94,11 +98,6 @@ class Dataset:
             for target in self.target_names:
                 formatted[self.feature_names[i]][target] = raw[target][i]
         return formatted
-
-    # Balancing
-    def apply_smote(self):
-        model = SMOTE(random_state=0)
-        self.features, self.target = model.fit_resample(self.features, self.target)
 
     # Preprocessing
     def apply_std_scaler(self, **kwargs):

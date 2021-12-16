@@ -83,6 +83,10 @@ class CIVETData(BaseData):
         filepath = os.path.join(output_dir, "civetqc.csv")
         self.df.to_csv(filepath, index=False)
         print(f"Output file: {filepath}")
+    
+    @classmethod
+    def get_from_txt(cls):
+        pass 
 
     @property
     def required_vars(self):
@@ -104,7 +108,7 @@ class QCData(BaseData):
         return [self.idvar, self.qcvar]
 
 
-class StudyData(CIVETData, QCData):
+class StudyData(BaseData):
     """ data from one CIVET output and one QC ratings file """
 
     feature_names = np.append(CIVETData.feature_names, "STUDY_ID")
@@ -113,8 +117,8 @@ class StudyData(CIVETData, QCData):
 
         self.civet_data = CIVETData(civet_csv)
         self.qc_data = QCData(qc_csv)
+        self.qcvar, self.target_names = QCData.qcvar, QCData.target_names
         self.study_id = study_id
-
         try:
             self.df = pd.merge(self.civet_data.df, self.qc_data.df, on=self.idvar).dropna()
         except Exception as err:

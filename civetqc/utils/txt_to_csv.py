@@ -13,16 +13,18 @@ def dict_values_equal(d: dict) -> bool:
     return True
 
 
-def txt_to_csv(dir_name: str, output_dir: Union[None, str] = None) -> None:
+def txt_to_csv(dir_name: str, outfile: Union[None, str] = None, id_len: int = 1) -> None:
     """ given a directory containing civet txt outputs, creates a single csv file """
 
-    outfile = os.path.join(output_dir, "civetqc_txt2csv.csv")
-
+    if outfile is None:
+        outfile = os.path.join(dir_name, "civetqc_txt2csv.csv")
+    
     # Get list of patient files in directory
     patient_files = {}
     for filename in os.listdir(dir_name):
         if "civet_qc" in filename:
-            patient_files[filename.split("_")[0]] = filename
+            patient_id = "_".join(filename.split("_")[:id_len])
+            patient_files[patient_id] = filename
 
     # Open each file and append data to dictionary
     civet_dict = {"ID": []}
