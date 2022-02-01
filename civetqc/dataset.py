@@ -113,12 +113,7 @@ class Dataset:
             except AttributeError:
                 self.df = study.df
             X_train, X_test, y_train, y_test = study.train_test_split()
-            
-            # transformer = QuantileTransformer(n_quantiles=len(X_test), random_state=0)
-            # X_train = transformer.fit_transform(X_train)
-            # X_test = transformer.transform(X_test)
 
-            # scaler = StandardScaler()
             # X_train = scaler.fit_transform(X_train)
             # X_test = scaler.transform(X_test)
 
