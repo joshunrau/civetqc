@@ -1,53 +1,36 @@
-import datetime
-import os
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
-try:
-    from study import StudyData
-except ImportError:
-    from .study import StudyData
-
+from .base import QCRatingsData, TabularCivetData, StudyData
 
 class Dataset:
-
-    processed_data_dir = os.path.join(StudyData.data_dir, "processed")
-
-    def __init__(self, df) -> None:
-        self.df = df
-
-    @classmethod
-    def make(cls):
-
+    
+    feature_names = TabularCivetData.feature_names
+    target_names = QCRatingsData.target_names
+    
+    def __init__(self) -> None:
+        
         studies = [
             StudyData(study_name="FEP", id_prefix="FEP"),
             StudyData(study_name="INSIGHT", id_prefix="Insight"),
             StudyData(study_name="LAM", id_prefix="LAM"),
             StudyData(study_name="NUSDAST"),
-            StudyData(study_name="TOPSY", id_len=3, includes="V1_gradient_n4_anlm0.5r"),
-        ]
-
-        dataset = cls(studies[0].df)
+            StudyData(study_name="TOPSY", id_len=3, includes="V1_gradient_n4_anlm0.5r")
+        ] 
+        
+        self.df = studies[0].df
         for study in studies[1:]:
-            dataset.df = pd.concat([dataset.df, study.df], ignore_index=True)
+            self.df = pd.concat([self.df, study.df], ignore_index=True)
+        
+        self.features = self.df[self.feature_names].to_numpy()
+        self.target = self.df[QCRatingsData.qcvar].to_numpy()
+        
+        self.train = {}
+        self.test = {}
+        self.train["Features"], self.test["Features"], self.train["Target"], self.test["Target"] = train_test_split(self.features, self.target, random_state=1)
+        
+        self.scaler = StandardScaler()
+        self.train["Features"] = self.scaler.fit_transform(self.train["Features"])
+        self.test["Features"] = self.scaler.transform(self.test["Features"])
 
-        filename = f"dataset_{datetime.date.today().isoformat()}.csv"
-        filepath = os.path.join(cls.processed_data_dir, filename)
-        dataset.df.to_csv(filepath, index=False)
-
-    @classmethod
-    def load(cls):
-        return cls(pd.read_csv(cls.get_path()))
-
-    @staticmethod
-    def get_path():
-        most_recent_dataset = None
-        for filename in os.listdir(Dataset.processed_data_dir):
-            if filename.startswith("dataset"):
-                file_date = datetime.date.fromisoformat(
-                    filename.split("_")[1].split(".")[0]
-                )
-                if most_recent_dataset is None or file_date > most_recent_dataset:
-                    most_recent_dataset = file_date
-        return os.path.join(
-            Dataset.processed_data_dir, f"dataset_{most_recent_dataset}.csv"
-        )

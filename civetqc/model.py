@@ -1,29 +1,33 @@
-import numpy as np
-
 from abc import ABC, abstractmethod
-from sklearn.metrics import fbeta_score, make_scorer
+from .data.dataset import Dataset
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, fbeta_score, make_scorer
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
-from .dataset import Dataset
-
-
-class AbstractModel(ABC):
-
+class BaseModel(ABC):
+    
     f2_scorer = make_scorer(fbeta_score, beta=2)
-
-    def __init__(self, data: Dataset) -> None:
-        self.data = data
-        self.preprocessing = Pipeline([("scaler", StandardScaler())])
-        self.data.train["Features"] = self.preprocessing.fit_transform(
-            self.data.train["Features"], self.data.train["Target"]
-        )
-        self.data.test["Features"] = self.preprocessing.transform(
-            self.data.test["Features"]
-        )
-
+    
+    def __init__(self) -> None:
+        self.data = Dataset()
+        gs = GridSearchCV(
+            self.pipeline,
+            param_grid=self.params,
+            scoring=self.f2_scorer,
+            cv=5)
+        gs.fit(self.data.train['Features'], self.data.train['Target'])
+        self.estimator = gs.best_estimator_
+        self.predicted = self.estimator.predict(self.data.test["Features"])
+    
+    def __str__(self):
+        return classification_report(self.data.test['Target'], self.predicted)
+    
     @abstractmethod
-    def fit(self):
+    def pipeline(self):
         pass
 
     @property
@@ -31,28 +35,85 @@ class AbstractModel(ABC):
     def params(self):
         pass
 
+    def score(self):
+        return self.estimator.score(self.data.test['Features'], self.data.test['Target'])
+    
+
+class KNN(BaseModel):
+    
+    def __init__(self):
+        super().__init__()
+    
     @property
-    @abstractmethod
-    def predicted(self):
-        pass
-
-
-class BaseModel(AbstractModel):
-    def __init__(self, data: Dataset) -> None:
-        super().__init__(data)
-
-    def fit(self):
-        return super().fit()
-
-    @property
-    def predicted(self):
-        return np.zeros(len(self.data.test["Target"]), dtype=np.int64)
+    def pipeline(self):
+        return Pipeline([
+            ('nca', NeighborhoodComponentsAnalysis()),
+            ('knc', KNeighborsClassifier()),
+        ])
 
     @property
     def params(self):
-        return super().params
+        return [{
+            'knc__n_neighbors': list(range(1, 11)),
+            'knc__leaf_size': [10, 30, 50]
+        }]
 
 
-class KNN(AbstractModel):
-    def __init__(self, data: Dataset) -> None:
-        super().__init__(data)
+class SVM(BaseModel):
+    
+    def __init__(self):
+        super().__init__()
+        
+    @property
+    def pipeline(self):
+        return Pipeline([
+            ('nca', NeighborhoodComponentsAnalysis()),
+            ('svc', SVC(class_weight="balanced")),
+        ])
+    
+    @property
+    def params(self):
+        return [{
+            'svc__C': [0.1, 1, 10, 100, 1000],
+            'svc__gamma': [1, 0.1, 0.01, 0.001, 0.0001],
+            'svc__kernel': ['rbf', 'poly', 'sigmoid']
+        }]
+
+class RandomForest(BaseModel):
+    
+    def __init__(self):
+        super().__init__()
+    
+    @property
+    def pipeline(self):
+        return Pipeline([
+            ('rf', RandomForestClassifier()),
+        ])
+    
+    @property
+    def params(self):
+        return [{
+            'rf__max_depth': [2, 4, 6, 8],
+            'rf__class_weight': [{0: 1, 1: 1}, {0: 2, 1: 1}, {0: 3, 1: 1}, {0: 10, 1: 1}, {0: 1, 1: 2}]
+        }]
+
+class NeuralNetwork(BaseModel):
+    
+    def __init__(self):
+        super().__init__()
+    
+    @property
+    def pipeline(self):
+        return Pipeline([
+            ('mlp', MLPClassifier(max_iter=1000)),
+        ])
+    
+    @property
+    def params(self):
+        return [{
+            'mlp__hidden_layer_sizes': [(50,50,50), (50,100,50), (100,)],
+            'mlp__activation': ['tanh', 'relu'],
+            'mlp__solver': ['sgd', 'adam'],
+            'mlp__alpha': [0.0001, 0.05],
+            'mlp__learning_rate': ['constant','adaptive'],
+        }]
