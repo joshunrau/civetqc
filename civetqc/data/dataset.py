@@ -34,10 +34,13 @@ class Dataset:
     
     @staticmethod
     def get_path():
+        most_recent_dataset = None
         for filename in os.listdir(Dataset.processed_data_dir):
             if filename.startswith("dataset"):
-                file_date = filename.split("_")[1].split(".")[0]
-                print(file_date)
+                file_date = datetime.date.fromisoformat(filename.split("_")[1].split(".")[0])
+                if most_recent_dataset is None or file_date > most_recent_dataset:
+                    most_recent_dataset = file_date
+        return os.path.join(Dataset.processed_data_dir, f"dataset_{most_recent_dataset}.csv")
 
 
         
