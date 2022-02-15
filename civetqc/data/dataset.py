@@ -11,7 +11,11 @@ class Dataset:
 
     processed_data_dir = os.path.join(StudyData.data_dir, "processed")
 
-    def __init__(self) -> None:
+    def __init__(self, df) -> None:
+        self.df = df
+    
+    @classmethod
+    def make(cls):
 
         studies = [
             StudyData(study_name="FEP", id_prefix="FEP"),
@@ -21,16 +25,17 @@ class Dataset:
             StudyData(study_name="TOPSY", id_len=3, includes="V1_gradient_n4_anlm0.5r")
         ]
 
-        for study in studies:
-            try:
-                self.df = pd.concat([self.df, study.df], ignore_index=True)
-            except AttributeError:
-                self.df = study.df
-    
-    def make(self):
+        dataset = cls(studies[0].df)
+        for study in studies[1:]:
+            dataset.df = pd.concat([dataset.df, study.df], ignore_index=True)
+
         filename = f"dataset_{datetime.date.today().isoformat()}.csv"
-        filepath = os.path.join(self.processed_data_dir, filename)
-        self.df.to_csv(filepath, index=False)
+        filepath = os.path.join(cls.processed_data_dir, filename)
+        dataset.df.to_csv(filepath, index=False)
+    
+    @classmethod
+    def load(cls):
+        return cls(pd.read_csv(cls.get_path()))
     
     @staticmethod
     def get_path():
