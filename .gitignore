@@ -144,3 +144,6 @@ dmypy.json
 # ignore test notebooks
 tmp/
 
+# ignore test file
+test.py
+

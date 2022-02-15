@@ -7,11 +7,13 @@ clean:
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
-install:
-	@if [ $${CONDA_PREFIX:(-7):7} != civetqc ]; then echo ERROR: must install in civetqc environment && exit 1; fi
+check_env:
+	@if [ $${CONDA_PREFIX:(-7):7} != civetqc ]; then echo ERROR: civetqc environment not set && exit 1; fi
+
+install: check_env
 	pip install .
 
-test:
-	python -m unittest discover .
+data: check_env
+	python civetqc/data
 
 clean-install: install clean
