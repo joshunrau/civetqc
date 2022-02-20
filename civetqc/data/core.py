@@ -5,7 +5,7 @@ import pandas as pd
 import time
 
 from . import RAW_DATA_DIRECTORY, ALL_FILE_SUFFIXES
-from .images import AnglesImage, AtlasImage
+from .images import AnglesImage, AtlasImage, GradientImage, LaplaceImage, SurfSurfImage
 
 class Study:
     
@@ -94,7 +94,10 @@ class Study:
         
         images = {
             "angles": AnglesImage(subject_files["angles"]),
-            "atlas": AtlasImage(subject_files["atlas"])
+            "atlas": AtlasImage(subject_files["atlas"]),
+            "gradient": GradientImage(subject_files["gradient"]),
+            "laplace": LaplaceImage(subject_files["laplace"]),
+            "surfsurf": SurfSurfImage(subject_files["surfsurf"])
         }
         
         features = {}

@@ -106,3 +106,77 @@ class AtlasImage(BaseImage):
     @text_area.setter
     def text_area(self, value):
         self.img[2:20, 275:780, :] = value
+
+
+class ClaspImage(BaseImage):
+    pass
+
+
+class GradientImage(BaseImage):
+    
+    def __init__(self, filepath):
+        super().__init__(filepath)
+    
+    @property
+    def background_color(self):
+        return 255
+    
+    @property
+    def expected_shape(self):
+        return (484, 1210, 3)
+    
+    @property
+    def text_area(self):
+        return self.img[2:20, 192:860, :]
+    
+    @text_area.setter
+    def text_area(self, value):
+        self.img[2:20, 192:860, :] = value
+
+
+class LaplaceImage(BaseImage):
+    
+    def __init__(self, filepath):
+        super().__init__(filepath)
+    
+    @property
+    def background_color(self):
+        return 255
+    
+    @property
+    def expected_shape(self):
+        return (484, 1210, 3)
+    
+    @property
+    def text_area(self):
+        return self.img[2:20, 192:780, :]
+    
+    @text_area.setter
+    def text_area(self, value):
+        self.img[2:20, 192:780, :] = value
+
+
+class SurfSurfImage(BaseImage):
+    
+    def __init__(self, filepath):
+        super().__init__(filepath)
+        
+    @property
+    def background_color(self):
+        return 255
+    
+    @property
+    def expected_shape(self):
+        return (484, 1210, 3)
+    
+    @property
+    def text_area(self):
+        return self.img[2:20, 350:760, :]
+    
+    @text_area.setter
+    def text_area(self, value):
+        self.img[2:20, 350:760, :] = value
+
+
+class VerifyImage(BaseImage):
+    pass
