@@ -4,7 +4,6 @@ import pickle
 
 from sklearn.base import BaseEstimator, is_classifier
 
-from resources import Filepaths
 
 
 def process_arguments(args: list) -> tuple:

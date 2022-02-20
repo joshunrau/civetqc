@@ -1,5 +1,5 @@
 .DEFAULT_GOAL:= clean-install
-.PHONY: clean requirements install test clean-install
+.PHONY: clean check_env install clean-install
 
 clean:
 	rm -fr build/
@@ -12,8 +12,5 @@ check_env:
 
 install: check_env
 	pip install .
-
-data: check_env
-	python civetqc/data
 
 clean-install: install clean
