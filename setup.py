@@ -47,7 +47,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'civetqc=civetqc.__main__:main'
+            'civetqc=civetqc.main:main'
         ]
     },
     include_package_data=True,

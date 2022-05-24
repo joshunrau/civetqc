@@ -18,7 +18,3 @@ def main(argv=None):
         "QC": predicted_qc
     })
     df.to_csv(os.path.join(app.args.output_dir, "civetqc.csv"), index=False)
-
-
-if __name__ == '__main__':
-    main()
