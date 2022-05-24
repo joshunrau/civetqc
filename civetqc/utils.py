@@ -1,10 +1,7 @@
-import cv2 as cv
-import matplotlib.pyplot as plt
+import pickle
 
+from .resources import ResourceFilepaths
 
-def disp(img):
-    plt.figure(figsize = (30, 10), dpi = 150)
-    if img.ndim == 2:
-        plt.imshow(img)
-    elif img.ndim == 3:
-        plt.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
+def load_saved_model(model_name):
+    with open(ResourceFilepaths.saved_models.get(model_name), 'rb') as f:
+        return pickle.load(f)

@@ -1,0 +1,8 @@
+{
+    "app": {
+        "name": "civetqc",
+        "description": "civetqc is a command-line utility for automated quality control of CIVET outputs",
+        "version": "1.0.0"
+    },
+    "defaultModel": "ridge"
+}

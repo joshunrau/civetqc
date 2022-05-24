@@ -1,30 +1,48 @@
 import argparse
-import os
-import pickle
+from pathlib import Path
+from .resources import config
 
-from sklearn.base import BaseEstimator, is_classifier
+class App:
 
+    name = config['app']['name']
+    description = config['app']['description']
+    version = config['app']['version']
 
+    def __init__(self) -> None:
+        self.parser = argparse.ArgumentParser(
+            prog = self.name,
+            description = self.description,
+            formatter_class = argparse.ArgumentDefaultsHelpFormatter
+        )
+        self.parser.add_argument(
+            "-v", "--version", 
+            action="version",
+            version=f"%(prog)s {self.version}"
+        )
+        self.parser.add_argument(
+            "filepath", 
+            help="path to csv file outputted by CIVET",
+            type=Path
+        )
+        self.parser.add_argument(
+            "-o", "--output_dir",
+            default=Path.cwd(),
+            help="directory where results should be outputted",
+            type=Path,
+            metavar=''
+        )
+        self._args = None
+    
+    @property
+    def args(self):
+        return self._args
 
-def process_arguments(args: list) -> tuple:
-    parser = argparse.ArgumentParser(prog="civetqc")
-    parser.add_argument("path_csv", help="path to csv file outputted by CIVET")
-    parser.add_argument(
-        "output_dir", help="path to directory where results should be outputted"
-    )
-    parsed_args = parser.parse_args(args)
-
-    if not os.path.isfile(parsed_args.path_csv):
-        raise FileNotFoundError
-    if not os.path.isdir(parsed_args.output_dir):
-        raise NotADirectoryError
-
-    return parsed_args.path_csv, parsed_args.output_dir
-
-
-def load_saved_model() -> BaseEstimator:
-    with open(Filepaths.saved_model, "rb") as f:
-        clf = pickle.load(f)
-    if not is_classifier(clf):
-        raise TypeError(f"Expected sklearn classifier object, not {type(clf)} ")
-    return clf
+    @args.setter
+    def args(self, value: argparse.Namespace):
+        if not value.filepath.is_file():
+            raise FileNotFoundError(f"File not found: {value.filepath}")
+        elif not value.output_dir.is_dir():
+            raise NotADirectoryError(f"Directory not found: {value.output_dir}")
+    
+    def parse_args(self, argv: list):
+        self.args = self.parser.parse_args(argv)

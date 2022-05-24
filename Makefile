@@ -1,5 +1,5 @@
 .DEFAULT_GOAL:= clean-install
-.PHONY: clean check_env install clean-install
+.PHONY: clean check_env install test clean-install
 
 clean:
 	rm -fr build/
@@ -12,5 +12,11 @@ check_env:
 
 install: check_env
 	pip install .
+
+install-dev: check_env
+	pip install --editable .
+
+test:
+	python -m unittest discover tests
 
 clean-install: install clean
