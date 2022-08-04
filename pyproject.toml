@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "civetqc"
+version = "0.0.5"
+authors = [
+  { name="Joshua Unrau", email="contact@joshuaunrau.com" },
+]
+description = "CivetQC is a command-line utility for automated quality control of CIVET outputs"
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "scikit-learn <= 1.1.1",
+    "numpy <= 1.23.1",
+    "pandas <= 1.4.3"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/joshunrau/civetqc"
+"Bug Tracker" = "https://github.com/joshunrau/civetqc/issues"
+
+[project.scripts]
+civetqc = "civetqc.app:App.main"
+
+[tool.setuptools.package-data]
+"civetqc.resources" = ["*.pkl"]
+
+[tool.setuptools.packages.find]
+include = ["civetqc", "civetqc.resources"]
