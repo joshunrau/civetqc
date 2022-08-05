@@ -77,11 +77,6 @@ class CIVETData(BaseData):
     
     @classmethod
     def from_output_files(cls, dir_path: str, prefix: str = '', subset_subject_ids: Union[list, None] = None):
-        data = cls.extract(dir_path=dir_path, prefix=prefix, subset_subject_ids=subset_subject_ids)
-        return cls(pd.DataFrame.from_dict(data, orient='index').rename_axis(cls.id_var).reset_index())
-    
-    @staticmethod
-    def extract(dir_path: str, prefix: str = '', subset_subject_ids: Union[list, None] = None):
 
         target_file_suffix = 'civet_qc.txt'
 
@@ -96,9 +91,17 @@ class CIVETData(BaseData):
         for subject_id, filepath in filepaths.items():
             with open(filepath, 'r') as f:
                 content = f.read().strip().split('\n')
-            data[subject_id] = {k: v for k, v in [s.split('=') for s in content]}
-            
-        return data
+            subject_data = {}
+            for key, value in [line.split('=') for line in content]:
+                try:
+                    subject_data[key] = float(value)
+                except ValueError as err:
+                    raise RuntimeError(f"Unexpected non-numeric value '{value}' for variable '{key}' in file: {filepath}") from err
+            missing_vars = [var for var in cls.feature_names if var not in subject_data.keys()]
+            if missing_vars != []:
+                raise RuntimeError(f"Missing variables in file '{filepath}': {', '.join(missing_vars)}")
+            data[subject_id] = subject_data
+        return cls(pd.DataFrame.from_dict(data, orient='index').rename_axis(cls.id_var).reset_index())
 
 
 class QCRatingsData(BaseData):
