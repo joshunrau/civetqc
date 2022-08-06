@@ -141,3 +141,4 @@ dmypy.json
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
+scratch.py
