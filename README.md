@@ -3,7 +3,7 @@
 ## About
 
 ### Background
- 
+
 The [CIVET Cortical Surface Extraction Pipeline](https://www.bic.mni.mcgill.ca/ServicesSoftware/CIVET) provides users with extensive data for quality control (QC) purposes. However, manually reviewing these outputs can be time consuming and impractical when working with extremely large datasets. Previous research with other processing pipelines has demonstrated that supervised learning algorithms offer a feasible means for automated QC [(Klapwijk et al., 2019)](https://doi.org/10.1016/j.neuroimage.2019.01.014). Here, we present CivetQC, a fully automated QC pipeline for CIVET outputs based on scikit-learn.
 
 ### Methods
