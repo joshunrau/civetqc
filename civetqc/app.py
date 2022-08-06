@@ -1,5 +1,3 @@
-import time
-
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib.metadata import version
 from pathlib import Path
@@ -8,6 +6,7 @@ import pandas as pd
 
 from .data import CIVETData
 from .model import Model
+from .utils import use_timer
 
 class App:
 
@@ -17,9 +16,8 @@ class App:
   default_output_filename = 'civetqc.csv'
 
   @classmethod
+  @use_timer
   def main(cls) -> None:
-
-    start_time = time.perf_counter()
 
     parser = ArgumentParser(prog=cls.name, formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {cls.version}")
@@ -50,6 +48,4 @@ class App:
     output_filepath = args.output_dir.joinpath(args.output_filename)
     df.to_csv(output_filepath, index=False)
 
-    elapsed_time = time.perf_counter() - start_time
     print(f"Done! Wrote output to file: {output_filepath}")
-    print(f"Completed in {elapsed_time:.3f}s")
