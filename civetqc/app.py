@@ -1,3 +1,5 @@
+import time
+
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib.metadata import version
 from pathlib import Path
@@ -16,6 +18,8 @@ class App:
 
   @classmethod
   def main(cls) -> None:
+
+    start_time = time.perf_counter()
 
     parser = ArgumentParser(prog=cls.name, formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {cls.version}")
@@ -42,5 +46,10 @@ class App:
       "ID":  civet_data.df[civet_data.id_var],
       "RESULT": model.predict(civet_data.features, labels={0: "PASS", 1: "FAIL"})
     })
-    
-    df.to_csv(args.output_dir.joinpath(args.output_filename), index=False)
+
+    output_filepath = args.output_dir.joinpath(args.output_filename)
+    df.to_csv(output_filepath, index=False)
+
+    elapsed_time = time.perf_counter() - start_time
+    print(f"Done! Wrote output to file: {output_filepath}")
+    print(f"Completed in {elapsed_time:.3f}s")
