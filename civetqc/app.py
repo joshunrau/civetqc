@@ -40,7 +40,7 @@ class App:
 
     df = pd.DataFrame({
       "ID":  civet_data.df[civet_data.id_var],
-      "CIVETQC_RESULT": model.predict(civet_data.features, labels={0: "PASS", 1: "FAIL"})
+      "RESULT": model.predict(civet_data.features, labels={0: "PASS", 1: "FAIL"})
     })
     
     df.to_csv(args.output_dir.joinpath(args.output_filename), index=False)
