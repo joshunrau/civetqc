@@ -14,21 +14,28 @@ class Model:
 
     resource_path = resource_filename(__name__, "resources/model.pkl")
 
-    def __init__(self, clf: RandomForestClassifier, threshold: float) -> None:
+    def __init__(self, clf: RandomForestClassifier, default_threshold: float) -> None:
         check_is_fitted(clf)
         self.clf = clf
-        self.threshold = threshold
+        self.default_threshold = default_threshold
 
-    def predict(self, data: np.ndarray, labels: dict = None) -> np.ndarray:
+    def predict(self, data: np.ndarray, labels: dict = None, threshold: float | None = None) -> np.ndarray:
+        if threshold is None:
+            threshold = self.default_threshold
         if labels is None:
-            return np.where(self.clf.predict_proba(data)[:, 1] > self.threshold, 1, 0)
-        return np.where(self.clf.predict_proba(data)[:, 1] > self.threshold, labels[1], labels[0])
-
+            return np.where(self.clf.predict_proba(data)[:, 1] > threshold, 1, 0)
+        return np.where(self.clf.predict_proba(data)[:, 1] > threshold, labels[1], labels[0])
+    
     def save(self) -> None:
         with open(self.resource_path, "wb") as file:
             pickle.dump(self, file)
-
+    
     @classmethod
     def load(cls) -> Model:
         with open(cls.resource_path, "rb") as file:
             return pickle.load(file)
+    
+    @classmethod
+    def get_default_threshold(cls) -> float:
+        model = Model.load()
+        return model.default_threshold

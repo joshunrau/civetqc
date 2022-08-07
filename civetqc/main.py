@@ -12,10 +12,13 @@ from civetqc.model import Model
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog='civetqc')
     parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {version('civetqc')}")
-    parser.add_argument("input_path", help='path to file or directory with CIVET QC outputs', type=Path)
-    parser.add_argument("--output_dir", default=Path.cwd(), help='default: %(default)s', type=Path, metavar='')
-    parser.add_argument("--output_format", metavar='', default='csv', choices=['csv', 'json'],
-                        type=str, help='options: csv (default), json')
+    parser.add_argument("input_path", type=Path, help='path to file or directory with CIVET QC outputs')
+    parser.add_argument("--threshold", type=float, default=Model.get_default_threshold(), metavar='', 
+                        help='probability above which a failure will be predicted (default: %(default)s)')
+    parser.add_argument("--output_dir",  type=Path, default=Path.cwd(), metavar='',
+                        help='directory for results (default: %(default)s)',)
+    parser.add_argument("--output_format", type=str, default='csv', choices=['csv', 'json'], metavar='',
+                        help='format for output file: csv, json (default: %(default)s)')
     return parser.parse_args()
 
 
@@ -24,7 +27,8 @@ def verify_args(args: argparse.Namespace) -> None:
         raise FileNotFoundError(f"Input path does not exist: {args.input_path}")
     elif not args.output_dir.is_dir():
         raise NotADirectoryError(f"Output directory does not exist: {args.output_dir}")
-
+    if not 1 > args.threshold > 0:
+        raise ValueError(f"Threshold must be greater than zero and less than one, got {args.threshold}")
 
 def load_civet_data(input_path: Path) -> CivetData:
     if input_path.is_file():
@@ -38,7 +42,7 @@ def main() -> None:
 
     civet_data = load_civet_data(args.input_path)
     model = Model.load()
-    predicted_qc = model.predict(civet_data.features, labels={0: "PASS", 1: "FAIL"})
+    predicted_qc = model.predict(civet_data.features, labels={0: "PASS", 1: "FAIL"}, threshold=args.threshold)
     qc_ratings = QCRatingsData(civet_data.subject_ids, predicted_qc)
 
     output_filepath = args.output_dir.joinpath(f"civetqc.{args.output_format}")
