@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "civetqc"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
   { name="Joshua Unrau", email="contact@joshuaunrau.com" },
 ]
@@ -21,7 +21,6 @@ classifiers = [
 dependencies = [
     "scikit-learn <= 1.1.1",
     "numpy <= 1.23.1",
-    "pandas <= 1.4.3"
 ]
 
 [project.urls]
@@ -29,7 +28,7 @@ dependencies = [
 "Bug Tracker" = "https://github.com/joshunrau/civetqc/issues"
 
 [project.scripts]
-civetqc = "civetqc.app:App.main"
+civetqc = "civetqc.main:main"
 
 [tool.setuptools.package-data]
 "civetqc.resources" = ["*.pkl"]
