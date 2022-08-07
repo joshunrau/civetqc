@@ -18,13 +18,12 @@ CivetQC is available via the Python Package Index (PyPI):
 
 In most cases, the preferred method of using CivetQC is through the command line interface. Users must provide an input path, which may be either a file or a directory. If available, it is recommend to provide the file outputted by CIVET with aggregated tabular QC metrics. However, if this file is not available, users may instead provide a path to a directory containing files of the format prefix_id_civet_qc.txt, in which case CivetQC will attempt to extract the relevant metrics for each subject. 
 
-    usage: civetqc [-h] [-v] [--output_dir] [--output_format] input_path
-
     positional arguments:
     input_path        path to file or directory with CIVET QC outputs
 
     optional arguments:
     -h, --help        show this help message and exit
     -v, --version     show program's version number and exit
-    --output_dir      default: /Users/joshua/Developer/civetqc
-    --output_format   options: csv (default), json
+    --threshold       probability above which a failure will be predicted (default: 0.2)
+    --output_dir      directory for results (default: /Users/joshua/Developer/civetqc)
+    --output_format   format for output file: csv, json (default: csv)
