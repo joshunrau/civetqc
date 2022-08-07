@@ -29,5 +29,5 @@ In most cases, the preferred method of using CivetQC is through the command line
     -h, --help        show this help message and exit
     -v, --version     show program's version number and exit
     --threshold       probability above which a failure will be predicted (default: 0.2)
-    --output_dir      directory for results (default: $HOME)
+    --output_dir      directory for results (default: $PWD)
     --output_format   format for output file: csv, json (default: csv)
