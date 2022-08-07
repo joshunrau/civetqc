@@ -46,13 +46,15 @@ class CivetData:
         return self._subject_ids
 
     @classmethod
-    def from_output_files(cls, dir_path: Path, prefix: str = '', subset_subject_ids: list | None = None) -> CivetData:
+    def from_output_files(cls, dir_path: Path | str, prefix: str = '', subset_subject_ids: list | None = None) -> CivetData:
         """ create instance from raw QC files outputted by CIVET """
+
+        dir_path = Path(dir_path)
 
         target_file_suffix = 'civet_qc.txt'
         subject_ids = []
         filepaths = []
-
+        
         for filename in os.listdir(dir_path):
             if filename.endswith(target_file_suffix):
                 subject_id = filename.removeprefix(prefix).removesuffix(target_file_suffix).strip('_')
@@ -78,7 +80,7 @@ class CivetData:
         return cls(np.array(subject_ids), features)
 
     @classmethod
-    def from_csv(cls, filepath: Path, idvar='ID') -> CivetData:
+    def from_csv(cls, filepath: Path | str, idvar='ID') -> CivetData:
         """ create instance from aggregated QC file outputted by CIVET """
 
         subject_ids = []
@@ -102,7 +104,7 @@ class CivetData:
                 features.append(values)
         return cls(np.array(subject_ids), np.array(features, dtype=float))
 
-    def to_output_files(self, dir_path: Path, prefix: str = '') -> None:
+    def to_output_files(self, dir_path: Path | str, prefix: str = '') -> None:
         """ write features to files in the row format outputted by CIVET """
 
         for index, subject_id in enumerate(self.subject_ids):
@@ -120,9 +122,8 @@ class QCRatingsData:
 
     def __init__(self, subject_ids: np.ndarray, qc_ratings: np.ndarray) -> None:
         assert len(subject_ids) == len(qc_ratings), f"{len(subject_ids)} != {len(qc_ratings)}"
-        self._subject_ids = subject_ids
-        self._qc_ratings = qc_ratings
-
+        self._subject_ids, self._qc_ratings = joint_sort(subject_ids, qc_ratings)
+    
     @property
     def subject_ids(self) -> np.ndarray:
         return self._subject_ids
@@ -134,19 +135,19 @@ class QCRatingsData:
     def to_dict(self) -> dict:
         return {k: v for k, v in zip(self.subject_ids, self.qc_ratings)}
 
-    def to_csv(self, filepath: Path) -> None:
+    def to_csv(self, filepath: Path | str) -> None:
         with open(filepath, 'w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=['ID', 'RATING'])
             writer.writeheader()
             for subject_id, qc_rating in zip(self.subject_ids, self.qc_ratings):
                 writer.writerow({'ID': subject_id, 'RATING': qc_rating})
 
-    def to_json(self, filepath: Path) -> None:
+    def to_json(self, filepath: Path | str) -> None:
         with open(filepath, 'w') as file:
             json.dump(self.to_dict(), file, indent=2)
 
     @classmethod
-    def from_csv(cls, filepath: Path, idvar='ID', qcvar='QC', allow_non_numeric: bool = False) -> QCRatingsData:
+    def from_csv(cls, filepath: Path | str, idvar='ID', qcvar='QC', allow_non_numeric: bool = False) -> QCRatingsData:
         """ create instance from a CSV file containing columns idvar and qcvar """
 
         subject_ids = []

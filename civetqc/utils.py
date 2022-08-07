@@ -42,9 +42,11 @@ def get_index(arr: np.ndarray, value: any) -> int:
         raise ValueError(f"Array does not contain value: {value}")
 
 
-def joint_sort(a1: np.ndarray, a2: np.ndarray, axis: int) -> tuple[np.ndarray, np.ndarray]:
+def joint_sort(a1: np.ndarray, a2: np.ndarray, axis: int = 0) -> tuple[np.ndarray, np.ndarray]:
     """ return a sorted copy of a1 and a copy of a2 sorted by a1 """
-    assert a1.ndim == 1 and a2.ndim == 2
-    assert a1.size == a2.shape[axis], f"{a1.size} != {a2.shape[axis]}"
+    assert a1.ndim == 1 and (a2.ndim == 1 or a2.ndim == 2)
     indices = np.argsort(a1)
+    if a2.ndim == 1:
+        return np.take(a1, indices), np.take(a2, indices)
+    assert a1.size == a2.shape[axis], f"{a1.size} != {a2.shape[axis]}"
     return np.take(a1, indices), np.take(a2, indices, axis)

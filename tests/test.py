@@ -19,8 +19,8 @@ DUMMY_DATA_PATHS = {
 }
 
 EXPECTED_RESULTS = {
-  'PASS': 203,
-  'FAIL': 197
+  'PASS': 201,
+  'FAIL': 199
 }
 
 TEST_OUTPUT_DIR = os.path.abspath('tmp')

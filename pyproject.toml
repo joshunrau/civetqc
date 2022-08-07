@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "civetqc"
-version = "0.1.2"
+version = "0.1.3"
 authors = [
   { name="Joshua Unrau", email="contact@joshuaunrau.com" },
 ]
-description = "CivetQC is a command-line utility for automated quality control of CIVET outputs"
+description = "CivetQC is a command-line tool for automated quality control of CIVET outputs"
 readme = "README.md"
 keywords = ["CIVET", "QC"]
 license = {text = "MIT License"}

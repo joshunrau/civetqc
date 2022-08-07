@@ -2,19 +2,11 @@
 
 ## About
 
-### Background
+CivetQC is a fully automated pipeline for quality control of [CIVET](https://www.bic.mni.mcgill.ca/ServicesSoftware/CIVET) outputs. Using the random forest algorithm implemented in scikit-learn, CivetQC categorises outputs as acceptable or unacceptable based on a variety of quality metrics, including number of surface-surface intersections, self-intersections, and brain mask error, among others. The model was developed using 1216 T1-weighted scans from several studies affiliated with McGill University in Montreal, Canada. A separate sample of 120 individuals from the UK Biobank served to evaluate final model performance. 
 
-The [CIVET Cortical Surface Extraction Pipeline](https://www.bic.mni.mcgill.ca/ServicesSoftware/CIVET) provides users with extensive data for quality control (QC) purposes. However, manually reviewing these outputs can be time consuming and impractical when working with extremely large datasets. Previous research with other processing pipelines has demonstrated that supervised learning algorithms offer a feasible means for automated QC [(Klapwijk et al., 2019)](https://doi.org/10.1016/j.neuroimage.2019.01.014). Here, we present CivetQC, a fully automated QC pipeline for CIVET outputs based on scikit-learn.
+We rated the output quality for each subject on a scale from 0 to 2 (0 = fail, 1 = questionable, 2 = pass) based on visual inspection of CIVET outputs. Ratings of 1 or 2 were considered acceptable, whereas ratings of less than one were considered unacceptable. The model was trained using stratified fivefold cross validation, and the optimal set of parameters were chosen based on the mean AUC ROC score from fifty iterations of a randomised search of the hyperparameter space. Finally, we selected the optimum discrimination threshold in terms of maximising the F2 score.
 
-### Methods
-Data from five of our previous studies involving patients with psychotic disorders and healthy controls (N=1216) were processed using the CIVET pipeline. We rated the output quality for each subject on a scale from 0 to 2 (0 = fail, 1 = questionable, 2 = pass) based on visual inspection of CIVET outputs. Ratings of 1 or 2 were considered acceptable (n = 1163, 95.6%), whereas ratings of less than one were considered unacceptable (n = 53, 4.4%). We used the random forest algorithm to classify outputs as acceptable or unacceptable based on various quality metrics, including number of surface-surface intersections, self-intersections, and brain mask error, among others. Model training was performed using stratified fivefold cross validation. The optimal set of hyperparameters was selected based on the mean F2 score from among ten iterations of a randomized search of the hyperparameter space. Subsequently, the model was refit with the optimal set of hyperparameters on the entire training dataset. Finally, we determined the optimal discrimination threshold based on the F2 score. After finalizing the model, we evaluated its performance on a set of previously unseen data from the UK Biobank (N=120). 
-
-### Results
-The testing data included 98 scans of acceptable quality and 22 scans of unacceptable quality.
-Overall model accuracy was 97%, with 0.99 precision and 0.98 recall for acceptable scans, and 0.91 precision and 0.95 recall for unacceptable scans. 
-
-### Conclusion
-These results demonstrate that comparably high recall and precision can be achieved for automated QC of CIVET outputs as has been demonstrated with FreeSurfer.
+The training data contained 1163 acceptable scans (95.6%) and 53 unacceptable scans (4.4%). During cross-validation, the mean AUC score for the best model was 0.91. As depicted below, the optimal F2 score was achieved with a discrimination threshold of 0.2, which yielded 1.00 precision and 0.98 recall for acceptable scans, and 0.71 precision and 0.98 recall for unacceptable scans. The testing data, on the other hand, included 98 scans of acceptable quality and 22 scans of unacceptable quality. The mean AUC score was 0.98, with 1.0 precision and 0.97 recall for acceptable scans, and 0.88 precision and 1.0 recall for unacceptable scans.
 
 ## Install
 
@@ -24,18 +16,15 @@ CivetQC is available via the Python Package Index (PyPI):
 
 ## Usage
 
-For most use cases, the preferred method of using CivetQC is through the command line interface. Users must provide an input path, which may be either a file or a directory.
+In most cases, the preferred method of using CivetQC is through the command line interface. Users must provide an input path, which may be either a file or a directory. If available, it is recommend to provide the file outputted by CIVET with aggregated tabular QC metrics. However, if this file is not available, users may instead provide a path to a directory containing files of the format prefix_id_civet_qc.txt, in which case CivetQC will attempt to extract the relevant metrics for each subject. 
 
-If available, it is recommend to provide the file outputted by CIVET with aggregated tabular QC metrics (civet_{prefix}_.csv). However, if this file is not available, users may instead provide a path to a directory containing files of the format prefix_id_civet_qc.txt, in which case CivetQC will attempt to extract the relevant metrics for each subject. 
-
-    usage: civetqc [-h] [-v] [--output_dir] [--output_filename] input_path
+    usage: civetqc [-h] [-v] [--output_dir] [--output_format] input_path
 
     positional arguments:
-    input_path
+    input_path        path to file or directory with CIVET QC outputs
 
     optional arguments:
-    -h, --help          show this help message and exit
-    -v, --version       show program's version number and exit
-    --output_dir        directory where results should be outputted
-    --output_filename   filename for results
-
+    -h, --help        show this help message and exit
+    -v, --version     show program's version number and exit
+    --output_dir      default: /Users/joshua/Developer/civetqc
+    --output_format   options: csv (default), json
