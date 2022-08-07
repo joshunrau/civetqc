@@ -2,6 +2,7 @@ import os
 import shutil
 import unittest
 
+from pathlib import Path
 from pkg_resources import resource_filename
 from unittest.mock import patch
 
@@ -26,8 +27,8 @@ TEST_OUTPUT_DIR = os.path.abspath('tmp')
 
 class TestData(unittest.TestCase):
   def test_data(self):
-    data_from_csv = CivetData.from_csv(DUMMY_DATA_PATHS['csv'])
-    data_from_output_files = CivetData.from_output_files(DUMMY_DATA_PATHS['dir'])
+    data_from_csv = CivetData.from_csv(Path(DUMMY_DATA_PATHS['csv']))
+    data_from_output_files = CivetData.from_output_files(Path(DUMMY_DATA_PATHS['dir']))
     self.assertTrue(np.array_equal(data_from_csv.subject_ids, data_from_output_files.subject_ids))
     self.assertTrue(np.array_equal(data_from_csv.features, data_from_output_files.features))
 
