@@ -119,39 +119,60 @@ class CivetData:
 
 class QCRatingsData:
     """ contains subject IDs and QC ratings, either for development or to format predictions for user """
+    
+    rating_labels = {
+        0: "PASS",
+        1: "FAIL"
+    }
 
-    def __init__(self, subject_ids: np.ndarray, qc_ratings: np.ndarray) -> None:
-        assert len(subject_ids) == len(qc_ratings), f"{len(subject_ids)} != {len(qc_ratings)}"
-        self._subject_ids, self._qc_ratings = joint_sort(subject_ids, qc_ratings)
+    def __init__(self, subject_ids: np.ndarray, ratings: np.ndarray, probabilities: np.ndarray | None = None) -> None:
+        if probabilities is None:
+            probabilities = np.full((len(subject_ids), 2), np.NaN)
+        if not len(subject_ids) == len(ratings) == len(probabilities):
+            raise AssertionError(f"False: {len(subject_ids)} == {len(ratings)} == {len(probabilities)}")
+        self._subject_ids, self._ratings, self._probabilities = joint_sort(subject_ids, ratings, probabilities)
     
     @property
     def subject_ids(self) -> np.ndarray:
         return self._subject_ids
 
     @property
-    def qc_ratings(self) -> np.ndarray:
-        return self._qc_ratings
-
+    def ratings(self) -> np.ndarray:
+        return self._ratings
+    
+    @property
+    def probabilities(self) -> np.ndarray:
+        return self._probabilities
+    
     def to_dict(self) -> dict:
-        return {k: v for k, v in zip(self.subject_ids, self.qc_ratings)}
+        d = {}
+        for index, subject_id in enumerate(self.subject_ids):
+            d[subject_id] = {
+                "rating": self.rating_labels[self.ratings[index]],
+                "probabilities": {
+                    self.rating_labels[0]: round(self.probabilities[index][0], 3),
+                    self.rating_labels[1]: round(self.probabilities[index][1], 3)
+                }
+            }
+        return d
 
     def to_csv(self, filepath: Path | str) -> None:
         with open(filepath, 'w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=['ID', 'RATING'])
             writer.writeheader()
-            for subject_id, qc_rating in zip(self.subject_ids, self.qc_ratings):
-                writer.writerow({'ID': subject_id, 'RATING': qc_rating})
-
+            for subject_id, qc_rating in zip(self.subject_ids, self.ratings):
+                writer.writerow({'ID': subject_id, 'RATING': self.rating_labels[qc_rating]})
+    
     def to_json(self, filepath: Path | str) -> None:
         with open(filepath, 'w') as file:
             json.dump(self.to_dict(), file, indent=2)
-
+    
     @classmethod
     def from_csv(cls, filepath: Path | str, idvar='ID', qcvar='QC', allow_non_numeric: bool = False) -> QCRatingsData:
         """ create instance from a CSV file containing columns idvar and qcvar """
 
         subject_ids = []
-        qc_ratings = []
+        ratings = []
 
         with open(filepath, 'r') as file:
             reader = csv.DictReader(file)
@@ -169,6 +190,6 @@ class QCRatingsData:
                         qc_rating = float(qc_rating)
                     except ValueError as err:
                         raise NonNumericValueError(qcvar, row[qcvar], filepath) from err
-                qc_ratings.append(qc_rating)
+                ratings.append(qc_rating)
 
-        return cls(np.array(subject_ids), np.array(qc_ratings))
+        return cls(np.array(subject_ids), np.array(ratings))

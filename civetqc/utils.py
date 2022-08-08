@@ -42,11 +42,14 @@ def get_index(arr: np.ndarray, value: any) -> int:
         raise ValueError(f"Array does not contain value: {value}")
 
 
-def joint_sort(a1: np.ndarray, a2: np.ndarray, axis: int = 0) -> tuple[np.ndarray, np.ndarray]:
-    """ return a sorted copy of a1 and a copy of a2 sorted by a1 """
-    assert a1.ndim == 1 and (a2.ndim == 1 or a2.ndim == 2)
-    indices = np.argsort(a1)
-    if a2.ndim == 1:
-        return np.take(a1, indices), np.take(a2, indices)
-    assert a1.size == a2.shape[axis], f"{a1.size} != {a2.shape[axis]}"
-    return np.take(a1, indices), np.take(a2, indices, axis)
+def joint_sort(a: np.ndarray, *args: np.ndarray, axis: int = 0) -> tuple[np.ndarray, ...]:
+    """ return sorted 1D array and arbitrary number of arrays sorted along axis by a1 """
+    if a.ndim != 1:
+        raise ValueError("Array given as first argument must be one-dimensional")
+    for arr in args:
+        if arr.ndim - 1 < axis:
+            raise ValueError(f"Cannot sort array with {arr.ndim} dimensions by axis {axis}")
+        if a.size != arr.shape[axis]:
+            raise ValueError(f"Size of axis '{axis}' of array given as argument '{args.index(arr) + 1}' must be equal to size '{a.size}' of first array, not '{arr.shape[axis]}'")
+    indices = np.argsort(a)
+    return np.take(a, indices), *[np.take(arr, indices, axis) for arr in args]

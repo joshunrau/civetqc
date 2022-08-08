@@ -58,8 +58,8 @@ class TestMain(unittest.TestCase):
     main()
     self.assertTrue(os.path.exists(output_file))
     data = QCRatingsData.from_csv(output_file, qcvar='RATING', allow_non_numeric=True)
-    self.assertEqual(sum(data.qc_ratings == 'PASS'), EXPECTED_RESULTS['PASS'])
-    self.assertEqual(sum(data.qc_ratings == 'FAIL'), EXPECTED_RESULTS['FAIL'])
+    self.assertEqual(sum(data.ratings == 'PASS'), EXPECTED_RESULTS['PASS'])
+    self.assertEqual(sum(data.ratings == 'FAIL'), EXPECTED_RESULTS['FAIL'])
 
 class TestUtils(unittest.TestCase):
 
@@ -85,6 +85,8 @@ class TestUtils(unittest.TestCase):
     s1, s2 = utils.joint_sort(a1, a2, axis=0)
     self.assertTrue(np.array_equal(s1, np.arange(1, 11)))
     self.assertTrue(np.array_equal(s2, np.flip(a2, axis=0)))
+    self.assertRaises(ValueError, utils.joint_sort, a1, a2, axis=1)
+    self.assertRaises(ValueError, utils.joint_sort, a1, a2, axis=2)
     a3 = np.arange(1, 31).reshape((3, 10))
     _, s3 = utils.joint_sort(a1, a3, axis=1)
     self.assertTrue(np.array_equal(s3, np.flip(a3, axis=1)))

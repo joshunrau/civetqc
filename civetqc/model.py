@@ -19,12 +19,13 @@ class Model:
         self.clf = clf
         self.default_threshold = default_threshold
 
-    def predict(self, data: np.ndarray, labels: dict = None, threshold: float | None = None) -> np.ndarray:
+    def predict(self, data: np.ndarray, threshold: float | None = None) -> np.ndarray:
         if threshold is None:
             threshold = self.default_threshold
-        if labels is None:
-            return np.where(self.clf.predict_proba(data)[:, 1] > threshold, 1, 0)
-        return np.where(self.clf.predict_proba(data)[:, 1] > threshold, labels[1], labels[0])
+        return np.where(self.predict_probabilities(data)[:, 1] > threshold, 1, 0)
+    
+    def predict_probabilities(self, data: np.ndarray):
+        return self.clf.predict_proba(data)
     
     def save(self) -> None:
         with open(self.resource_path, "wb") as file:
