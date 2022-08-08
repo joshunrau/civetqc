@@ -158,10 +158,15 @@ class QCRatingsData:
 
     def to_csv(self, filepath: Path | str) -> None:
         with open(filepath, 'w', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=['ID', 'RATING'])
+            writer = csv.DictWriter(file, fieldnames=['ID', 'RATING', f"P({self.rating_labels[0]})", f"P({self.rating_labels[1]})"])
             writer.writeheader()
-            for subject_id, qc_rating in zip(self.subject_ids, self.ratings):
-                writer.writerow({'ID': subject_id, 'RATING': self.rating_labels[qc_rating]})
+            for index, (subject_id, qc_rating) in enumerate(zip(self.subject_ids, self.ratings)):
+                writer.writerow({
+                    'ID': subject_id, 
+                    'RATING': self.rating_labels[qc_rating],
+                    f"P({self.rating_labels[0]})": round(self.probabilities[index][0], 3),
+                    f"P({self.rating_labels[1]})": round(self.probabilities[index][1], 3)
+                })
     
     def to_json(self, filepath: Path | str) -> None:
         with open(filepath, 'w') as file:
