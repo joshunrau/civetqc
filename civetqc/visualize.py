@@ -6,9 +6,11 @@ import numpy as np
 from matplotlib.axes import Axes
 from sklearn.metrics import fbeta_score, precision_score, recall_score
 
-from sklearn.base import BaseEstimator
+from sklearn.model_selection import GridSearchCV
 
-def plot_discrimination_thresholds(estimator: BaseEstimator, features: np.ndarray, target: np.ndarray, ax: Axes | None = None) -> Axes:
+from .train import get_estimator_name
+
+def plot_discrimination_thresholds(search: GridSearchCV, features: np.ndarray, target: np.ndarray, ax: Axes | None = None) -> Axes:
     discrimination_thresholds = np.arange(0, 1.1, .1)
     scores = {
         'Precision': [],
@@ -16,7 +18,7 @@ def plot_discrimination_thresholds(estimator: BaseEstimator, features: np.ndarra
         'F2': []
     }
     for threshold in discrimination_thresholds:
-        probabilities = estimator.predict_proba(features)
+        probabilities = search.predict_proba(features)
         if probabilities.shape[1] != 2: # In case later someone adds borderline fails
           raise ValueError('Not a binary classification task!')
         predictions = np.where(probabilities[:, 1] > threshold, 1, 0)
@@ -32,7 +34,7 @@ def plot_discrimination_thresholds(estimator: BaseEstimator, features: np.ndarra
     ax.set_xticks(discrimination_thresholds)
     ax.set_xlabel("Threshold")
     ax.set_ylabel("Scores")
-    ax.set_title("Discrimination Thresholds")
+    ax.set_title(f"Discrimination Thresholds for {get_estimator_name(search)}")
     ax.legend()
     
     return ax

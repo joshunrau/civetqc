@@ -8,7 +8,7 @@ We rated the output quality for each subject on a scale from 0 to 2 (0 = fail, 1
 
 The training data contained 1163 acceptable scans (95.6%) and 53 unacceptable scans (4.4%). During cross-validation, the mean AUC score for the best model was 0.91. As depicted below, the optimal F2 score was achieved with a discrimination threshold of 0.2, which yielded 1.00 precision and 0.98 recall for acceptable scans, and 0.71 precision and 0.98 recall for unacceptable scans. 
 
-![Discrimination Thresholds](https://github.com/joshunrau/civetqc/blob/main/figures/discrimination_thresholds.jpeg)
+![Discrimination Thresholds](https://github.com/joshunrau/civetqc/blob/main/figures/thresholds_rfc.jpeg)
 
 The testing data, on the other hand, included 98 scans of acceptable quality and 22 scans of unacceptable quality. The mean AUC score was 0.98, with 1.0 precision and 0.97 recall for acceptable scans, and 0.88 precision and 1.0 recall for unacceptable scans.
 
