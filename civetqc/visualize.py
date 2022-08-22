@@ -4,10 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.axes import Axes
-from sklearn.metrics import fbeta_score, precision_score, recall_score
 
+from sklearn.inspection import permutation_importance
+from sklearn.metrics import fbeta_score, precision_score, recall_score
 from sklearn.model_selection import GridSearchCV
 
+from .data import CivetData, QCRatingsData
+from .model import Model
 from .train import get_estimator_name
 
 def plot_discrimination_thresholds(search: GridSearchCV, features: np.ndarray, target: np.ndarray, ax: Axes | None = None) -> Axes:
@@ -37,4 +40,21 @@ def plot_discrimination_thresholds(search: GridSearchCV, features: np.ndarray, t
     ax.set_title(f"Discrimination Thresholds for {get_estimator_name(search)}")
     ax.legend()
     
+    return ax
+
+def plot_permutation_importance(model: Model, civet_data: CivetData, qc_data: QCRatingsData, ax: Axes, n_repeats: int = 25) -> Axes:
+    result = permutation_importance(
+        model.clf, 
+        civet_data.features, 
+        qc_data.ratings, 
+        scoring='roc_auc', 
+        n_repeats=n_repeats
+    )
+    sorted_index = result.importances_mean.argsort()
+    sorted_names = civet_data.feature_names[sorted_index]
+    sorted_importances = result.importances[sorted_index].T
+    ax.boxplot(sorted_importances, vert=False, sym='')
+    ax.set_title('Permutation Importance (Testing Data)')
+    ax.set_xlabel('Decrease in AUC Score')
+    ax.set_yticklabels(sorted_names)
     return ax
