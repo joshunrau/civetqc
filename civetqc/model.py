@@ -23,19 +23,19 @@ class Model:
         if threshold is None:
             threshold = self.default_threshold
         return np.where(self.predict_probabilities(data)[:, 1] > threshold, 1, 0)
-    
+
     def predict_probabilities(self, data: np.ndarray):
         return self.clf.predict_proba(data)
-    
+
     def save(self) -> None:
         with open(self.resource_path, "wb") as file:
             pickle.dump(self, file)
-    
+
     @classmethod
     def load(cls) -> Model:
         with open(cls.resource_path, "rb") as file:
             return pickle.load(file)
-    
+
     @classmethod
     def get_default_threshold(cls) -> float:
         model = Model.load()
