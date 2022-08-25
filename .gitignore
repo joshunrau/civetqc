@@ -135,10 +135,12 @@ dmypy.json
 .idea/
 
 # Subject data
-/data/
+data/
 
 # Jupyter
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
-scratch.py
+figures/
+notebooks/
+tables/

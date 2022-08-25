@@ -13,7 +13,7 @@ from .data import CivetData, QCRatingsData
 from .model import Model
 from .train import get_estimator_name
 
-def plot_discrimination_thresholds(search: GridSearchCV, features: np.ndarray, target: np.ndarray, ax: Axes | None = None) -> Axes:
+def plot_discrimination_thresholds(search: GridSearchCV, features: np.ndarray, target: np.ndarray, ax: Axes | None = None, show_title: bool = True) -> Axes:
     discrimination_thresholds = np.arange(0, 1.1, .1)
     scores = {
         'Precision': [],
@@ -37,12 +37,12 @@ def plot_discrimination_thresholds(search: GridSearchCV, features: np.ndarray, t
     ax.set_xticks(discrimination_thresholds)
     ax.set_xlabel("Threshold")
     ax.set_ylabel("Scores")
-    ax.set_title(f"Discrimination Thresholds for {get_estimator_name(search)}")
     ax.legend()
-    
+    if show_title:
+        ax.set_title(f"Discrimination Thresholds for {get_estimator_name(search)}")
     return ax
 
-def plot_permutation_importance(model: Model, civet_data: CivetData, qc_data: QCRatingsData, ax: Axes, n_repeats: int = 25) -> Axes:
+def plot_permutation_importance(model: Model, civet_data: CivetData, qc_data: QCRatingsData, ax: Axes, n_repeats: int = 25, show_title: bool = True) -> Axes:
     result = permutation_importance(
         model.clf, 
         civet_data.features, 
@@ -54,7 +54,8 @@ def plot_permutation_importance(model: Model, civet_data: CivetData, qc_data: QC
     sorted_names = civet_data.feature_names[sorted_index]
     sorted_importances = result.importances[sorted_index].T
     ax.boxplot(sorted_importances, vert=False, sym='')
-    ax.set_title('Permutation Importance (Testing Data)')
     ax.set_xlabel('Decrease in AUC Score')
     ax.set_yticklabels(sorted_names)
+    if show_title:
+        ax.set_title('Permutation Importance (Testing Data)')
     return ax
