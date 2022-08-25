@@ -91,8 +91,8 @@ class CivetData:
         for filename in os.listdir(dir_path):
             if filename.endswith(target_file_suffix):
                 subject_id = (
-                    filename.removeprefix(prefix)
-                    .removesuffix(target_file_suffix)
+                    filename.replace(prefix, "")
+                    .replace(target_file_suffix, "")
                     .strip("_")
                 )
                 if subset_subject_ids is None or subject_id in subset_subject_ids:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from statistics import mean, stdev
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -7,44 +9,58 @@ from matplotlib.axes import Axes
 
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import fbeta_score, precision_score, recall_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import cross_val_predict, StratifiedKFold
+from sklearn.pipeline import Pipeline
 
 from .data import CivetData, QCRatingsData
 from .model import Model
-from .train import get_estimator_name
 
 
 def plot_discrimination_thresholds(
-    search: GridSearchCV,
+    pipeline: Pipeline,
     features: np.ndarray,
     target: np.ndarray,
+    cv: StratifiedKFold = StratifiedKFold(n_splits=5),
+    n_permutations: int = 50,
     ax: Axes | None = None,
-    show_title: bool = True,
 ) -> Axes:
+
     discrimination_thresholds = np.arange(0, 1.1, 0.1)
-    scores: dict[str, list[float]] = {"Precision": [], "Recall": [], "F2": []}
-    for threshold in discrimination_thresholds:
-        probabilities = search.predict_proba(features)
-        if probabilities.shape[1] != 2:  # In case later someone adds borderline fails
-            raise ValueError("Not a binary classification task!")
-        predictions = np.where(probabilities[:, 1] > threshold, 1, 0)
-        scores["Precision"].append(
-            precision_score(target, predictions, zero_division=1)
+
+    results: dict[str, list[list[float]]] = {
+        "Precision": [[] for x in range(len(discrimination_thresholds))],
+        "Recall": [[] for x in range(len(discrimination_thresholds))],
+        "F2": [[] for x in range(len(discrimination_thresholds))],
+    }
+
+    for _ in range(n_permutations):
+        probabilities = cross_val_predict(
+            pipeline, features, target, method="predict_proba", cv=cv
         )
-        scores["Recall"].append(recall_score(target, predictions))
-        scores["F2"].append(fbeta_score(target, predictions, beta=2))
+        for index, threshold in enumerate(discrimination_thresholds):
+            predictions = np.where(probabilities[:, 1] > threshold, 1, 0)
+            results["Precision"][index].append(
+                precision_score(target, predictions, zero_division=1)
+            )
+            results["Recall"][index].append(recall_score(target, predictions))
+            results["F2"][index].append(fbeta_score(target, predictions, beta=2))
 
     if ax is None:
         ax = plt.gca()
 
-    for key, value in scores.items():
-        ax.plot(discrimination_thresholds, value, label=key, marker="o")
+    for metric, scores in results.items():
+        means = [round(mean(score), 2) for score in scores]
+        stdevs = [round(stdev(score), 2) for score in scores]
+        ax.errorbar(
+            discrimination_thresholds, means, label=metric, marker="o", yerr=stdevs
+        )
+
     ax.set_xticks(discrimination_thresholds)
     ax.set_xlabel("Threshold")
     ax.set_ylabel("Scores")
+    ax.grid()
     ax.legend()
-    if show_title:
-        ax.set_title(f"Discrimination Thresholds for {get_estimator_name(search)}")
+
     return ax
 
 
