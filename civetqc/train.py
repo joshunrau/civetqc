@@ -88,8 +88,8 @@ def get_scores(searches: list[RandomizedSearchCV]) -> dict:
     return scores
 
 
-def get_cv_scores(searches: list[RandomizedSearchCV]) -> dict:
-    cv_scores = {}
+def get_cv_scores(searches: list[RandomizedSearchCV]) -> dict[str, list[float]]:
+    cv_scores: dict[str, list[float]] = {}
     for search in searches:
         key = get_estimator_name(search)
         cv_scores[key] = []

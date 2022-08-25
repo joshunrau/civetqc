@@ -22,7 +22,7 @@ def plot_discrimination_thresholds(
     show_title: bool = True,
 ) -> Axes:
     discrimination_thresholds = np.arange(0, 1.1, 0.1)
-    scores = {"Precision": [], "Recall": [], "F2": []}
+    scores: dict[str, list[float]] = {"Precision": [], "Recall": [], "F2": []}
     for threshold in discrimination_thresholds:
         probabilities = search.predict_proba(features)
         if probabilities.shape[1] != 2:  # In case later someone adds borderline fails

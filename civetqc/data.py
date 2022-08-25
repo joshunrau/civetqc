@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from .exceptions import ColumnNotFoundError, NonNumericValueError, NonUniqueIDsError
 from .utils import check_types, get_non_unique, get_index, joint_sort
@@ -98,8 +99,8 @@ class CivetData:
                     subject_ids.append(subject_id)
                     filepaths.append(dir_path.joinpath(filename))
 
-        features = np.ndarray(
-            shape=(len(filepaths), len(cls.feature_names)), dtype=float
+        features: npt.NDArray[np.float64] = np.ndarray(
+            shape=((len(filepaths), len(cls.feature_names))), dtype=np.float64
         )
 
         for row_index, subject_id in enumerate(subject_ids):
@@ -120,7 +121,7 @@ class CivetData:
         return cls(np.array(subject_ids), features)
 
     @classmethod
-    def from_csv(cls, filepath: Path | str, idvar="ID") -> CivetData:
+    def from_csv(cls, filepath: Path | str, idvar: str = "ID") -> CivetData:
         """create instance from aggregated QC file outputted by CIVET"""
 
         subject_ids = []
@@ -146,7 +147,7 @@ class CivetData:
                 features.append(values)
         return cls(np.array(subject_ids), np.array(features, dtype=float))
 
-    def to_output_files(self, dir_path: Path | str, prefix: str = "") -> None:
+    def to_output_files(self, dir_path: Path, prefix: str = "") -> None:
         """write features to files in the row format outputted by CIVET"""
 
         for index, subject_id in enumerate(self.subject_ids):
@@ -240,8 +241,8 @@ class QCRatingsData:
     def from_csv(
         cls,
         filepath: Path | str,
-        idvar="ID",
-        qcvar="QC",
+        idvar: str = "ID",
+        qcvar: str = "QC",
         allow_non_numeric: bool = False,
     ) -> QCRatingsData:
         """create instance from a CSV file containing columns idvar and qcvar"""

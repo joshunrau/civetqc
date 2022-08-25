@@ -24,7 +24,7 @@ class Model:
             threshold = self.default_threshold
         return np.where(self.predict_probabilities(data)[:, 1] > threshold, 1, 0)
 
-    def predict_probabilities(self, data: np.ndarray):
+    def predict_probabilities(self, data: np.ndarray) -> np.ndarray:
         return self.clf.predict_proba(data)
 
     def save(self) -> None:

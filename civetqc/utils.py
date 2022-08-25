@@ -4,13 +4,13 @@ import time
 
 import numpy as np
 
-from typing import Callable
+from typing import Any, Callable
 
 
 def use_timer(func: Callable) -> Callable:
     """used as a decorator to time function execution"""
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         start_time = time.perf_counter()
         return_value = func(*args, **kwargs)
         print(f"Completed in {time.perf_counter() - start_time:.3f}s")
@@ -32,7 +32,7 @@ def check_types(*args: tuple[object, type]) -> None:
             raise TypeError(f"Expected {t}, not {type(o)}")
 
 
-def get_index(arr: np.ndarray, value: any) -> int:
+def get_index(arr: np.ndarray, value: Any) -> int:
     """equivalent to index method on list"""
     if arr.ndim != 1:
         raise ValueError("Array must be one-dimensional")
