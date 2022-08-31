@@ -16,8 +16,6 @@ from sklearn.svm import SVC
 
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 f2_scorer = make_scorer(fbeta_score, beta=2)
-precision_scorer = make_scorer(precision_score, zero_division=1)
-recall_scorer = make_scorer(recall_score)
 
 search = RandomizedSearchCV(
     estimator=Pipeline(
@@ -49,8 +47,10 @@ search = RandomizedSearchCV(
     scoring = {
         "balanced_accuracy": balanced_accuracy_scorer,
         "f2": f2_scorer,
-        "precision": precision_scorer,
-        "recall": recall_scorer,
+        "precision_acceptable_scans": make_scorer(precision_score, zero_division=1, pos_label=0),
+        "recall_acceptable_scans":  make_scorer(recall_score, pos_label=0),
+        "precision_unacceptable_scans": make_scorer(precision_score, zero_division=1, pos_label=1),
+        "recall_unacceptable_scans":  make_scorer(recall_score, pos_label=1),
     },
     n_iter = 500,
     n_jobs = -1,
