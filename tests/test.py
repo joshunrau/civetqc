@@ -18,7 +18,7 @@ DUMMY_DATA_PATHS = {
     "dir": resource_filename(__name__, "dummy_data/verify"),
 }
 
-EXPECTED_RESULTS = {"PASS": 201, "FAIL": 199}
+EXPECTED_RESULTS = {"PASS": 188, "FAIL": 212}
 
 TEST_OUTPUT_DIR = os.path.abspath("tmp")
 
