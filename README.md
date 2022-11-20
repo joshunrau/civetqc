@@ -1,5 +1,7 @@
 # CivetQC
 
+![tests](https://github.com/joshunrau/civetqc/actions/workflows/main.yml/badge.svg)
+
 ## About
 
 CivetQC is a fully automated pipeline for quality control of [CIVET](https://www.bic.mni.mcgill.ca/ServicesSoftware/CIVET) outputs. Using the random forest algorithm implemented in scikit-learn, CivetQC categorises outputs as acceptable or unacceptable based on a variety of quality metrics, including number of surface-surface intersections, self-intersections, and brain mask error, among others. The model was developed using 1216 T1-weighted scans from several studies affiliated with McGill University in Montreal, Canada. A separate sample of 120 individuals from the UK Biobank served to evaluate final model performance. 
