@@ -1,5 +1,7 @@
 # CivetQC
 
+![python-version](https://img.shields.io/pypi/pyversions/civetqc)
+![license](https://img.shields.io/pypi/l/civetqc?color=green)
 ![tests](https://github.com/joshunrau/civetqc/actions/workflows/main.yml/badge.svg)
 
 ## About
