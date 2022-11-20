@@ -1,5 +1,6 @@
 # CivetQC
 
+![license](https://img.shields.io/pypi/l/civetqc)
 ![tests](https://github.com/joshunrau/civetqc/actions/workflows/main.yml/badge.svg)
 
 ## About
