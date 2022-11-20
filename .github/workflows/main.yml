@@ -1,7 +1,7 @@
 name: tests
 on: push
 jobs:
-  python3.9:
+  python-39:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -11,7 +11,7 @@ jobs:
           cache: 'pip'
       - run: make
       - run: make test
-  python3.10:
+  python-310:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
