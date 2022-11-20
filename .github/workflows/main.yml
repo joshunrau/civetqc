@@ -1,14 +1,23 @@
 name: tests
 on: push
 jobs:
-  test:
+  python3.9:
     runs-on: ubuntu-latest
-    container: 
-      image: python:3.10
     steps:
-      - name: download code
-        uses: actions/checkout@v3
-      - name: install package and dependencies
-        run: make
-      - name: run tests
-        run: make test
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - run: make
+      - run: make test
+  python3.10:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - run: make
+      - run: make test
