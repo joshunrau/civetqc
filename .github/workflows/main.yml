@@ -12,7 +12,7 @@ jobs:
           cache-dependency-path: 'pyproject.toml'
       - run: make
       - run: make test
-  v-3-10:
+  v3-10:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
