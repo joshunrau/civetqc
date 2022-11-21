@@ -2,7 +2,7 @@
 
 ![python-version](https://img.shields.io/pypi/pyversions/civetqc)
 ![pypi-version](https://img.shields.io/pypi/v/civetqc)
-![license](https://img.shields.io/pypi/l/civetqc?color=green)
+![license](https://img.shields.io/pypi/l/civetqc)
 ![tests](https://github.com/joshunrau/civetqc/actions/workflows/main.yml/badge.svg)
 
 ## About
